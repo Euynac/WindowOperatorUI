@@ -251,6 +251,15 @@ namespace WindowOperatorUI
                 
                 // Create and show the window selector
                 _windowSelector = new WindowSelector(_appConfig.KeepOriginalSize);
+                
+                // 添加保持窗口大小设置改变事件处理
+                _windowSelector.KeepOriginalSizeChanged += (s, keepOriginalSize) => 
+                {
+                    // 当窗口选择器中的设置改变时，同步更新应用设置UI
+                    _appConfig.KeepOriginalSize = keepOriginalSize;
+                    chkKeepOriginalSize.IsChecked = keepOriginalSize;
+                };
+                
                 _windowSelector.WindowSelected += (s, args) =>
                 {
                     if (args.WindowHandle != IntPtr.Zero)
@@ -353,7 +362,28 @@ namespace WindowOperatorUI
         
         private void AppSettings_Changed(object sender, RoutedEventArgs e)
         {
-            // No need to save immediately, user will save when ready
+            // 当应用设置改变时，实时更新 _appConfig 对象中的值
+            if (sender is CheckBox checkBox)
+            {
+                if (checkBox == chkKeepOriginalSize)
+                {
+                    _appConfig.KeepOriginalSize = checkBox.IsChecked ?? true;
+                }
+                else if (checkBox == chkSilentMode)
+                {
+                    _appConfig.SilentMode = checkBox.IsChecked ?? false;
+                }
+                else if (checkBox == chkRunAtStartup)
+                {
+                    _appConfig.RunAtStartup = checkBox.IsChecked ?? false;
+                }
+                else if (checkBox == chkRunAsAdmin)
+                {
+                    _appConfig.RunAsAdmin = checkBox.IsChecked ?? false;
+                }
+            }
+            
+            // 不需要立即保存，用户将在准备好时保存
         }
         
         private void LvWindowConfigs_SelectionChanged(object sender, SelectionChangedEventArgs e)

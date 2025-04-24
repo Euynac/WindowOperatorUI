@@ -16,6 +16,7 @@ namespace WindowOperatorUI.Controls
     public class WindowSelector : Window
     {
         public event EventHandler<WindowSelectedEventArgs> WindowSelected;
+        public event EventHandler<bool> KeepOriginalSizeChanged;
         private DispatcherTimer _highlightTimer;
         private IntPtr _hwndSource;
         private bool _isTransparentToInput = false; // 控制是否启用点击穿透
@@ -24,6 +25,18 @@ namespace WindowOperatorUI.Controls
         private TextBlock _infoTextBlock;
         private PresentationSource _presentationSource;
         private CheckBox _keepOriginalSizeCheckBox;
+
+        public bool KeepOriginalSize
+        {
+            get => _keepOriginalSizeCheckBox?.IsChecked ?? true;
+            set
+            {
+                if (_keepOriginalSizeCheckBox != null)
+                {
+                    _keepOriginalSizeCheckBox.IsChecked = value;
+                }
+            }
+        }
 
         public WindowSelector(bool keepOriginalSize = true)
         {
@@ -87,6 +100,11 @@ namespace WindowOperatorUI.Controls
                 IsChecked = keepOriginalSize,
                 Margin = new Thickness(0, 0, 0, 5)
             };
+            
+            // 添加复选框改变事件处理
+            _keepOriginalSizeCheckBox.Checked += KeepOriginalSizeCheckBox_CheckedChanged;
+            _keepOriginalSizeCheckBox.Unchecked += KeepOriginalSizeCheckBox_CheckedChanged;
+            
             optionsPanel.Children.Add(_keepOriginalSizeCheckBox);
             
             optionsBorder.Child = optionsPanel;
@@ -119,6 +137,12 @@ namespace WindowOperatorUI.Controls
             
             // 窗口加载时获取窗口句柄
             Loaded += WindowSelector_Loaded;
+        }
+        
+        private void KeepOriginalSizeCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            // 当复选框状态改变时，触发事件
+            KeepOriginalSizeChanged?.Invoke(this, _keepOriginalSizeCheckBox.IsChecked ?? true);
         }
         
         private void WindowSelector_Loaded(object sender, RoutedEventArgs e)

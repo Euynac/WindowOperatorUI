@@ -20,6 +20,7 @@ namespace WindowOperatorUI.Controls
         private bool _isSelecting = false;
         private IntPtr _selectedWindowHandle = IntPtr.Zero;
         private IntPtr _hwndSource;
+        private bool _isTransparentToInput = false; // 控制是否启用点击穿透
 
         public WindowSelector()
         {
@@ -37,7 +38,7 @@ namespace WindowOperatorUI.Controls
             // Add instructions overlay
             var instructionText = new TextBlock
             {
-                Text = "Click and drag to select a window.\nPress ESC to cancel.",
+                Text = "点击并拖拽以选择窗口。\n按ESC取消选择。",
                 Foreground = Brushes.White,
                 Background = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0)),
                 Padding = new Thickness(10),
@@ -59,7 +60,7 @@ namespace WindowOperatorUI.Controls
             _refreshTimer.Interval = TimeSpan.FromMilliseconds(50);
             _refreshTimer.Tick += RefreshTimer_Tick;
             
-            // 增加在窗口加载时设置点击穿透
+            // 增加在窗口加载时获取窗口句柄
             Loaded += WindowSelector_Loaded;
         }
         
@@ -68,13 +69,35 @@ namespace WindowOperatorUI.Controls
             // 获取窗口句柄
             var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
             _hwndSource = hwndSource.Handle;
+        }
+
+        // 设置点击穿透状态
+        private void SetInputTransparent(bool transparent)
+        {
+            if (_hwndSource == IntPtr.Zero) return;
             
-            // 设置窗口为点击穿透
+            if (transparent == _isTransparentToInput) return; // 已经是目标状态
+            
             var extendedStyle = NativeMethods.GetWindowLong(_hwndSource, NativeMethods.GWL_EXSTYLE);
-            NativeMethods.SetWindowLong(
-                _hwndSource,
-                NativeMethods.GWL_EXSTYLE,
-                extendedStyle | NativeMethods.WS_EX_TRANSPARENT);
+            
+            if (transparent)
+            {
+                // 添加透明标志
+                NativeMethods.SetWindowLong(
+                    _hwndSource,
+                    NativeMethods.GWL_EXSTYLE,
+                    extendedStyle | NativeMethods.WS_EX_TRANSPARENT);
+            }
+            else
+            {
+                // 移除透明标志
+                NativeMethods.SetWindowLong(
+                    _hwndSource,
+                    NativeMethods.GWL_EXSTYLE,
+                    extendedStyle & ~NativeMethods.WS_EX_TRANSPARENT);
+            }
+            
+            _isTransparentToInput = transparent;
         }
 
         private void WindowSelector_KeyDown(object sender, KeyEventArgs e)
@@ -88,23 +111,12 @@ namespace WindowOperatorUI.Controls
 
         private void WindowSelector_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            // 禁用点击穿透以便能接收鼠标事件
+            SetInputTransparent(false);
+            
             _startPoint = e.GetPosition(this);
             _isSelecting = true;
             _refreshTimer.Start();
-            
-            // 获取点击位置的窗口句柄
-            var point = GetScreenPoint(_startPoint);
-            var hwnd = NativeMethods.WindowFromPoint(point);
-            
-            // 确保不是选择到自己
-            if (hwnd == _hwndSource)
-            {
-                var hwndBelow = GetWindowBelowPoint(point);
-                if (hwndBelow != IntPtr.Zero)
-                {
-                    hwnd = hwndBelow;
-                }
-            }
         }
 
         private void WindowSelector_MouseMove(object sender, MouseEventArgs e)
@@ -158,63 +170,68 @@ namespace WindowOperatorUI.Controls
                 _isSelecting = false;
                 _refreshTimer.Stop();
                 
-                // Get the window under the cursor
-                _selectedWindowHandle = GetWindowHandleAtPosition(_endPoint);
+                // 启用点击穿透以便能选择下面的窗口
+                SetInputTransparent(true);
                 
-                if (_selectedWindowHandle != IntPtr.Zero && _selectedWindowHandle != _hwndSource)
+                // 获取鼠标位置下的窗口
+                _endPoint = e.GetPosition(this);
+                var point = GetScreenPoint(_endPoint);
+                
+                // 延迟一点以确保点击穿透生效
+                var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+                timer.Tick += (s, args) =>
                 {
-                    // Get window info
-                    var processId = 0;
-                    NativeMethods.GetWindowThreadProcessId(_selectedWindowHandle, out processId);
+                    timer.Stop();
                     
-                    var process = Process.GetProcessById(processId);
-                    var executablePath = process.MainModule?.FileName ?? "";
+                    // 获取窗口句柄
+                    var hwnd = GetWindowBelowPoint(point);
                     
-                    var rect = new NativeMethods.RECT();
-                    NativeMethods.GetWindowRect(_selectedWindowHandle, ref rect);
-                    
-                    // Trigger event
-                    WindowSelected?.Invoke(this, new WindowSelectedEventArgs
+                    if (hwnd != IntPtr.Zero && hwnd != _hwndSource)
                     {
-                        WindowHandle = _selectedWindowHandle,
-                        ExecutablePath = executablePath,
-                        X = rect.Left,
-                        Y = rect.Top,
-                        Width = rect.Right - rect.Left,
-                        Height = rect.Bottom - rect.Top
-                    });
-                }
-                else
-                {
-                    // No window selected or selected self
-                    WindowSelected?.Invoke(this, new WindowSelectedEventArgs());
-                }
-                
-                Close();
+                        // 获取窗口信息
+                        try
+                        {
+                            var processId = 0;
+                            NativeMethods.GetWindowThreadProcessId(hwnd, out processId);
+                            
+                            var process = Process.GetProcessById(processId);
+                            var executablePath = process.MainModule?.FileName ?? "";
+                            
+                            var rect = new NativeMethods.RECT();
+                            NativeMethods.GetWindowRect(hwnd, ref rect);
+                            
+                            // 触发事件
+                            WindowSelected?.Invoke(this, new WindowSelectedEventArgs
+                            {
+                                WindowHandle = hwnd,
+                                ExecutablePath = executablePath,
+                                X = rect.Left,
+                                Y = rect.Top,
+                                Width = rect.Right - rect.Left,
+                                Height = rect.Bottom - rect.Top
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"获取窗口信息时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                            WindowSelected?.Invoke(this, new WindowSelectedEventArgs());
+                        }
+                    }
+                    else
+                    {
+                        // 没有选择窗口或选择了自己
+                        WindowSelected?.Invoke(this, new WindowSelectedEventArgs());
+                    }
+                    
+                    Close();
+                };
+                timer.Start();
             }
         }
 
         private void RefreshTimer_Tick(object sender, EventArgs e)
         {
-            // This method could be used to highlight the window under the cursor
-            // during selection if more advanced feedback is desired
-        }
-
-        private IntPtr GetWindowHandleAtPosition(Point point)
-        {
-            // 获取屏幕坐标
-            var screenPoint = GetScreenPoint(point);
-            
-            // 获取点击位置的窗口句柄
-            var hwnd = NativeMethods.WindowFromPoint(screenPoint);
-            
-            // 如果获取到的是自己，尝试获取下面的窗口
-            if (hwnd == _hwndSource)
-            {
-                hwnd = GetWindowBelowPoint(screenPoint);
-            }
-            
-            return hwnd;
+            // 这个方法可以用来在鼠标移动时高亮显示光标下的窗口
         }
         
         private NativeMethods.POINT GetScreenPoint(Point point)

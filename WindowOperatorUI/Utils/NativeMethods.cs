@@ -62,6 +62,9 @@ namespace WindowOperatorUI.Utils
         
         [DllImport("user32.dll", SetLastError = true)]
         public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out int lpdwProcessId);
+        
+        [DllImport("user32.dll")]
+        public static extern bool GetCursorPos(ref POINT lpPoint);
 
         [StructLayout(LayoutKind.Sequential)]
         public struct POINT

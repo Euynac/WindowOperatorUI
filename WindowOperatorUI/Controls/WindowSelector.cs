@@ -20,6 +20,8 @@ namespace WindowOperatorUI.Controls
         private bool _isTransparentToInput = false; // 控制是否启用点击穿透
         private IntPtr _currentHighlightedWindow = IntPtr.Zero;
         private Border _highlightBorder;
+        private TextBlock _infoTextBlock;
+        private PresentationSource _presentationSource;
 
         public WindowSelector()
         {
@@ -34,17 +36,31 @@ namespace WindowOperatorUI.Controls
             var grid = new Grid();
             grid.Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0));
             
-            // 添加指示边框（初始不可见）
+            // 添加指示边框
             _highlightBorder = new Border
             {
                 BorderBrush = new SolidColorBrush(Colors.Red),
-                BorderThickness = new Thickness(2),
-                Background = new SolidColorBrush(Color.FromArgb(20, 255, 0, 0)), // 半透明红色
-                Visibility = Visibility.Collapsed,
+                BorderThickness = new Thickness(5),
+                Background = new SolidColorBrush(Color.FromArgb(5, 255, 0, 0)),
+                Visibility = Visibility.Hidden,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top
             };
             grid.Children.Add(_highlightBorder);
+            
+            // 添加窗口信息显示文本
+            _infoTextBlock = new TextBlock
+            {
+                Foreground = Brushes.White,
+                Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+                Padding = new Thickness(5),
+                Margin = new Thickness(10, 10, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                FontSize = 12,
+                Text = "移动鼠标到窗口上可显示窗口信息"
+            };
+            grid.Children.Add(_infoTextBlock);
             
             // 添加说明文本
             var instructionText = new TextBlock
@@ -78,8 +94,12 @@ namespace WindowOperatorUI.Controls
         private void WindowSelector_Loaded(object sender, RoutedEventArgs e)
         {
             // 获取窗口句柄
-            var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
-            _hwndSource = hwndSource.Handle;
+            var hwndSource = PresentationSource.FromVisual(this) as HwndSource;
+            if (hwndSource != null)
+            {
+                _hwndSource = hwndSource.Handle;
+                _presentationSource = hwndSource;
+            }
             
             // 启动高亮定时器
             _highlightTimer.Start();
@@ -133,7 +153,8 @@ namespace WindowOperatorUI.Controls
             _highlightTimer.Stop();
             
             // 获取鼠标位置
-            var point = GetScreenPoint(e.GetPosition(this));
+            var mousePos = GetMousePosition();
+            var point = new NativeMethods.POINT { X = (int)mousePos.X, Y = (int)mousePos.Y };
             
             // 启用点击穿透以便能选择下面的窗口
             SetInputTransparent(true);
@@ -145,7 +166,7 @@ namespace WindowOperatorUI.Controls
                 timer.Stop();
                 
                 // 获取窗口句柄
-                var hwnd = GetWindowBelowPoint(point);
+                var hwnd = GetWindowHandleFromPoint(point);
                 
                 if (hwnd != IntPtr.Zero && hwnd != _hwndSource)
                 {
@@ -191,79 +212,155 @@ namespace WindowOperatorUI.Controls
 
         private void WindowSelector_MouseMove(object sender, MouseEventArgs e)
         {
-            // 鼠标移动时更新当前位置，高亮定时器会处理窗口高亮
+            // 禁用点击穿透以便能接收鼠标事件
+            SetInputTransparent(false);
         }
 
         private void HighlightTimer_Tick(object sender, EventArgs e)
         {
-            // 获取鼠标位置
-            var mousePos = GetMousePosition();
-            var point = new NativeMethods.POINT { X = (int)mousePos.X, Y = (int)mousePos.Y };
-            
-            // 临时设置为点击穿透以获取下方窗口
-            SetInputTransparent(true);
-            
             try
             {
+                // 获取鼠标位置
+                var mousePos = GetMousePosition();
+                var point = new NativeMethods.POINT { X = (int)mousePos.X, Y = (int)mousePos.Y };
+                
+                // 临时设置为点击穿透以获取下方窗口
+                SetInputTransparent(true);
+                
                 // 获取鼠标下方的窗口
-                var hwnd = NativeMethods.WindowFromPoint(point);
+                var hwnd = GetWindowHandleFromPoint(point);
                 
-                // 如果是自己，尝试获取下一层窗口
-                if (hwnd == _hwndSource)
-                {
-                    hwnd = GetWindowBelowPoint(point);
-                }
+                // 恢复非点击穿透状态以便能接收鼠标事件
+                SetInputTransparent(false);
                 
-                // 如果窗口变化了，更新高亮框
-                if (hwnd != _currentHighlightedWindow && hwnd != IntPtr.Zero && hwnd != _hwndSource)
+                if (hwnd != IntPtr.Zero && hwnd != _hwndSource)
                 {
-                    _currentHighlightedWindow = hwnd;
-                    
-                    // 获取窗口区域
-                    var rect = new NativeMethods.RECT();
-                    if (NativeMethods.GetWindowRect(hwnd, ref rect))
+                    // 如果窗口发生变化或首次获取
+                    if (hwnd != _currentHighlightedWindow)
                     {
-                        // 计算相对于屏幕的位置
-                        var left = rect.Left;
-                        var top = rect.Top;
-                        var width = rect.Right - rect.Left;
-                        var height = rect.Bottom - rect.Top;
+                        _currentHighlightedWindow = hwnd;
                         
-                        // 转换为相对于我们窗口的位置
-                        var windowPos = PointFromScreen(new Point(left, top));
-                        
-                        // 更新高亮边框
-                        _highlightBorder.Margin = new Thickness(windowPos.X, windowPos.Y, 0, 0);
-                        _highlightBorder.Width = width;
-                        _highlightBorder.Height = height;
-                        _highlightBorder.Visibility = Visibility.Visible;
+                        try
+                        {
+                            // 获取窗口区域
+                            var rect = new NativeMethods.RECT();
+                            if (NativeMethods.GetWindowRect(hwnd, ref rect))
+                            {
+                                // 获取窗口标题和进程信息
+                                string windowTitle = NativeMethods.GetWindowTitle(hwnd);
+                                
+                                var processId = 0;
+                                NativeMethods.GetWindowThreadProcessId(hwnd, out processId);
+                                string processName = "未知进程";
+                                
+                                try
+                                {
+                                    var process = Process.GetProcessById(processId);
+                                    processName = process.ProcessName;
+                                }
+                                catch { }
+                                
+                                // 更新窗口信息文本
+                                _infoTextBlock.Text = $"窗口: {windowTitle}\n进程: {processName}\n位置: ({rect.Left}, {rect.Top})\n大小: {rect.Right - rect.Left} x {rect.Bottom - rect.Top}";
+                                
+                                // 使用正确的方法计算高亮框位置
+                                UpdateHighlightBorderPosition(rect);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // 如果获取窗口信息出错，隐藏高亮框
+                            _highlightBorder.Visibility = Visibility.Hidden;
+                            _infoTextBlock.Text = $"无法获取窗口信息: {ex.Message}";
+                        }
                     }
                 }
-                else if (hwnd == IntPtr.Zero || hwnd == _hwndSource)
+                else
                 {
                     // 如果没有找到窗口或是自己，隐藏高亮框
-                    _highlightBorder.Visibility = Visibility.Collapsed;
+                    _highlightBorder.Visibility = Visibility.Hidden;
+                    _infoTextBlock.Text = "移动鼠标到窗口上可显示窗口信息";
                     _currentHighlightedWindow = IntPtr.Zero;
                 }
             }
-            finally
+            catch (Exception ex)
             {
-                // 恢复非点击穿透状态以便能接收鼠标事件
-                SetInputTransparent(false);
+                // 发生异常时更新文本
+                _infoTextBlock.Text = $"出错: {ex.Message}";
+                _highlightBorder.Visibility = Visibility.Hidden;
             }
         }
         
-        private NativeMethods.POINT GetScreenPoint(Point point)
+        // 更新高亮框位置的专用方法
+        private void UpdateHighlightBorderPosition(NativeMethods.RECT rect)
         {
-            // 转换为屏幕坐标
-            var screenPoint = PointToScreen(point);
-            
-            // 转换为系统坐标（通常以像素为单位）
-            return new NativeMethods.POINT
+            try
             {
-                X = (int)screenPoint.X,
-                Y = (int)screenPoint.Y
-            };
+                if (_presentationSource == null)
+                {
+                    _highlightBorder.Visibility = Visibility.Hidden;
+                    return;
+                }
+                
+                // 获取系统DPI缩放
+                Matrix transformToDevice = _presentationSource.CompositionTarget.TransformToDevice;
+                
+                // 获取屏幕坐标点 (左上角和右下角)
+                Point screenPointTopLeft = new Point(rect.Left, rect.Top);
+                Point screenPointBottomRight = new Point(rect.Right, rect.Bottom);
+                
+                // 转换为设备无关的逻辑坐标
+                // WPF使用设备无关像素(DIPs)，而Win32 API使用物理像素
+                Point devicePointTopLeft = transformToDevice.Transform(screenPointTopLeft);
+                Point devicePointBottomRight = transformToDevice.Transform(screenPointBottomRight);
+                
+                // 再转换为WPF窗口内的坐标
+                Point windowPointTopLeft;
+                Point windowPointBottomRight;
+                
+                try
+                {
+                    windowPointTopLeft = PointFromScreen(screenPointTopLeft);
+                    windowPointBottomRight = PointFromScreen(screenPointBottomRight);
+                    
+                    // 计算宽度和高度 (DPI校正后)
+                    double width = windowPointBottomRight.X - windowPointTopLeft.X;
+                    double height = windowPointBottomRight.Y - windowPointTopLeft.Y;
+                    
+                    // 设置高亮框位置和大小
+                    _highlightBorder.Width = width;
+                    _highlightBorder.Height = height;
+                    _highlightBorder.Margin = new Thickness(windowPointTopLeft.X, windowPointTopLeft.Y, 0, 0);
+                    _highlightBorder.Visibility = Visibility.Visible;
+                }
+                catch
+                {
+                    // 使用备用方法作为退路 - 直接使用设备坐标计算
+                    try 
+                    {
+                        double dpiScaleX = transformToDevice.M11;
+                        double dpiScaleY = transformToDevice.M22;
+                        
+                        double left = rect.Left / dpiScaleX;
+                        double top = rect.Top / dpiScaleY;
+                        double width = (rect.Right - rect.Left) / dpiScaleX;
+                        double height = (rect.Bottom - rect.Top) / dpiScaleY;
+                        
+                        _highlightBorder.Width = width;
+                        _highlightBorder.Height = height;
+                        _highlightBorder.Margin = new Thickness(left, top, 0, 0);
+                        _highlightBorder.Visibility = Visibility.Visible;
+                    }
+                    catch
+                    {
+                        _highlightBorder.Visibility = Visibility.Hidden;
+                    }
+                }
+            }
+            catch
+            {
+                _highlightBorder.Visibility = Visibility.Hidden;
+            }
         }
         
         private Point GetMousePosition()
@@ -272,6 +369,22 @@ namespace WindowOperatorUI.Controls
             NativeMethods.POINT point = new NativeMethods.POINT();
             NativeMethods.GetCursorPos(ref point);
             return new Point(point.X, point.Y);
+        }
+        
+        // 从鼠标点获取窗口句柄，优先获取可见窗口
+        private IntPtr GetWindowHandleFromPoint(NativeMethods.POINT point)
+        {
+            // 首先尝试直接获取鼠标下的窗口
+            var hwnd = NativeMethods.WindowFromPoint(point);
+            
+            // 检查是否是自己
+            if (hwnd == _hwndSource)
+            {
+                // 如果是自己，尝试获取下方的窗口
+                hwnd = GetWindowBelowPoint(point);
+            }
+            
+            return hwnd;
         }
         
         // 获取指定点位置下方的窗口（忽略自己的窗口）

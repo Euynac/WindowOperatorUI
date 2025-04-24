@@ -36,6 +36,9 @@ namespace WindowOperatorUI
             InitializeComponent();
             LoadConfiguration();
             lvWindowConfigs.ItemsSource = _windowConfigs;
+            
+            // 检查当前是否以管理员身份运行
+            UpdateAdminStatus();
         }
 
         private void LoadConfiguration()
@@ -379,7 +382,34 @@ namespace WindowOperatorUI
                 }
                 else if (checkBox == chkRunAsAdmin)
                 {
-                    _appConfig.RunAsAdmin = checkBox.IsChecked ?? false;
+                    bool isChecked = checkBox.IsChecked ?? false;
+                    _appConfig.RunAsAdmin = isChecked;
+                    
+                    // 获取当前是否以管理员身份运行
+                    bool isCurrentlyAdmin = IsRunningAsAdmin();
+                    
+                    // 如果当前状态与请求的状态不同，询问是否重启
+                    if (isCurrentlyAdmin != isChecked)
+                    {
+                        string message = isChecked ? 
+                            "需要以管理员身份重新启动程序才能使此设置生效。是否立即重启？" : 
+                            "需要以普通用户身份重新启动程序才能使此设置生效。是否立即重启？";
+                        
+                        var result = MessageBox.Show(
+                            message, 
+                            "权限变更", 
+                            MessageBoxButton.YesNo, 
+                            MessageBoxImage.Question);
+                        
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            SaveConfiguration();
+                            if (isChecked)
+                                RestartAsAdmin();
+                            else
+                                RestartAsNormalUser();
+                        }
+                    }
                 }
             }
             
@@ -498,5 +528,114 @@ namespace WindowOperatorUI
         }
         
         #endregion
+
+        #region Admin Privileges Handling
+        
+        private void RestartAsAdmin()
+        {
+            try
+            {
+                // 获取当前执行文件路径
+                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                
+                // 创建启动信息
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    UseShellExecute = true,
+                    Verb = "runas" // 请求以管理员身份运行
+                };
+                
+                // 尝试启动新进程
+                Process.Start(startInfo);
+                
+                // 关闭当前进程
+                Application.Current.Shutdown();
+            }
+            catch (Exception ex)
+            {
+                NotificationService.ShowError($"无法以管理员身份重启: {ex.Message}");
+            }
+        }
+        
+        private void RestartAsNormalUser()
+        {
+            try
+            {
+                // 获取当前执行文件路径
+                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                
+                // 创建启动信息
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    UseShellExecute = true
+                    // 普通用户不需要指定Verb
+                };
+                
+                // 尝试启动新进程
+                Process.Start(startInfo);
+                
+                // 关闭当前进程
+                Application.Current.Shutdown();
+            }
+            catch (Exception ex)
+            {
+                NotificationService.ShowError($"无法以普通用户身份重启: {ex.Message}");
+            }
+        }
+        
+        #endregion
+
+        private void UpdateAdminStatus()
+        {
+            try
+            {
+                // 获取当前Windows用户标识
+                var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+                var principal = new System.Security.Principal.WindowsPrincipal(identity);
+                
+                // 检查是否具有管理员权限
+                bool isAdmin = principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                
+                // 更新UI显示
+                chkRunAsAdmin.IsChecked = isAdmin;
+                
+                // 如果当前是管理员权限运行，更新配置
+                if (isAdmin && _appConfig != null)
+                {
+                    _appConfig.RunAsAdmin = true;
+                }
+                
+                // 添加管理员状态提示
+                if (isAdmin)
+                {
+                    chkRunAsAdmin.Content = "以管理员身份运行 (当前已启用)";
+                    chkRunAsAdmin.Foreground = new SolidColorBrush(Colors.LightGreen);
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.ShowError($"无法检查管理员状态: {ex.Message}");
+            }
+        }
+
+        private bool IsRunningAsAdmin()
+        {
+            try
+            {
+                // 获取当前Windows用户标识
+                var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+                var principal = new System.Security.Principal.WindowsPrincipal(identity);
+                
+                // 检查是否具有管理员权限
+                return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+            }
+            catch (Exception ex)
+            {
+                NotificationService.ShowError($"无法检查管理员状态: {ex.Message}");
+                return false;
+            }
+        }
     }
 }

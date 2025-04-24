@@ -22,6 +22,14 @@ namespace WindowOperatorUI
         {
             base.OnStartup(e);
 
+            // 检查是否需要以管理员身份运行
+            if (!IsRunningAsAdmin() && ShouldRunAsAdmin())
+            {
+                RestartAsAdmin();
+                Shutdown();
+                return;
+            }
+
             // Check command line arguments
             var runInBackground = false;
             
@@ -49,6 +57,70 @@ namespace WindowOperatorUI
                 Shutdown();
             }
             // 不再手动创建MainWindow，因为它已经通过StartupUri在XAML中声明
+        }
+
+        private bool IsRunningAsAdmin()
+        {
+            try
+            {
+                // 获取当前Windows用户标识
+                var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+                var principal = new System.Security.Principal.WindowsPrincipal(identity);
+                
+                // 检查是否具有管理员权限
+                return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool ShouldRunAsAdmin()
+        {
+            try
+            {
+                // 检查配置文件是否存在
+                if (!File.Exists(ConfigPath))
+                {
+                    return false;
+                }
+
+                // 读取配置
+                var json = File.ReadAllText(ConfigPath);
+                var config = JsonSerializer.Deserialize<AppConfig>(json);
+                
+                // 检查RunAsAdmin设置
+                return config?.RunAsAdmin ?? false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void RestartAsAdmin()
+        {
+            try
+            {
+                // 获取当前执行文件路径
+                string exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+                
+                // 创建启动信息
+                var startInfo = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = exePath,
+                    UseShellExecute = true,
+                    Verb = "runas" // 请求以管理员身份运行
+                };
+                
+                // 尝试启动新进程
+                System.Diagnostics.Process.Start(startInfo);
+            }
+            catch
+            {
+                // 启动失败时不做任何处理，让程序继续以普通权限运行
+            }
         }
 
         private void RunBackgroundOperations()

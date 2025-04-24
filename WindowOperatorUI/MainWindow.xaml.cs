@@ -392,7 +392,111 @@ namespace WindowOperatorUI
         }
         
         #endregion
-    }
 
-  
+        #region Drag and Drop Handlers
+        
+        private void ConfigItem_DragEnter(object sender, DragEventArgs e)
+        {
+            // 清除所有默认的拖放目标效果
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            
+            // 对文件拖放提供特殊处理
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                // 必须设置为Copy才能显示正确的拖放图标
+                e.Effects = DragDropEffects.Copy;
+                
+                // 视觉反馈 - 背景高亮
+                if (sender is Grid grid)
+                {
+                    grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                }
+            }
+        }
+        
+        private void ConfigItem_DragOver(object sender, DragEventArgs e)
+        {
+            // 清除所有默认的拖放目标效果
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            
+            // 对文件拖放提供特殊处理
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                // 必须设置为Copy才能显示正确的拖放图标
+                e.Effects = DragDropEffects.Copy;
+                
+                // 视觉反馈 - 保持高亮状态
+                if (sender is Grid grid && grid.Background == Brushes.Transparent)
+                {
+                    grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                }
+            }
+        }
+        
+        private void ConfigItem_DragLeave(object sender, DragEventArgs e)
+        {
+            // 重置视觉反馈
+            if (sender is Grid grid)
+            {
+                grid.Background = Brushes.Transparent;
+            }
+            
+            e.Handled = true;
+        }
+        
+        private void ConfigItem_Drop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                // 重置视觉反馈
+                if (sender is Grid grid)
+                {
+                    grid.Background = Brushes.Transparent;
+                }
+                
+                // 检查是否是文件拖放
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    WindowConfig config = null;
+                    
+                    // 从Tag或其他方式获取WindowConfig
+                    if (sender is FrameworkElement element)
+                    {
+                        config = element.Tag as WindowConfig;
+                    }
+                    
+                    if (config != null)
+                    {
+                        // 获取拖放的文件
+                        string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                        
+                        // 如果有多个文件被拖放，取第一个
+                        if (files != null && files.Length > 0)
+                        {
+                            string filePath = files[0];
+                            
+                            // 更新配置中的路径
+                            config.ExePath = filePath;
+                            
+                            // 刷新ListView显示更新后的路径
+                            lvWindowConfigs.Items.Refresh();
+                            
+                            // 显示成功通知
+                            NotificationService.ShowSuccess($"Path updated to: {Path.GetFileName(filePath)}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.ShowError($"Error during file drop: {ex.Message}");
+            }
+            
+            e.Handled = true;
+        }
+        
+        #endregion
+    }
 }

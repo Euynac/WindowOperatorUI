@@ -50,6 +50,13 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Margin" Value="0,0,8,0"/>
         </Style>
+        
+        <Style x:Key="DropTargetStyle" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="IsHitTestVisible" Value="True"/>
+        </Style>
     </Window.Resources>
 
     <Border CornerRadius="10" Background="#CC222222" BorderBrush="#44FFFFFF" BorderThickness="1">
@@ -175,7 +182,13 @@
                         </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid>
+                                <Grid AllowDrop="True" 
+                                      DragEnter="ConfigItem_DragEnter" 
+                                      DragLeave="ConfigItem_DragLeave" 
+                                      DragOver="ConfigItem_DragOver"
+                                      Background="Transparent" 
+                                      Drop="ConfigItem_Drop"
+                                      Tag="{Binding}">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>

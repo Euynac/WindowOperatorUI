@@ -562,26 +562,19 @@ namespace WindowOperatorUI
         {
             try
             {
-                // 获取当前执行文件路径
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                // 保存当前配置文件路径，确保同步更改保存
+                SaveConfiguration();
                 
-                // 创建启动信息
-                ProcessStartInfo startInfo = new ProcessStartInfo
-                {
-                    FileName = exePath,
-                    UseShellExecute = true
-                    // 普通用户不需要指定Verb
-                };
+                // 显示提示消息
+                MessageBox.Show("应用程序将关闭。请手动以普通用户身份重新启动应用程序。", 
+                    "权限降级", MessageBoxButton.OK, MessageBoxImage.Information);
                 
-                // 尝试启动新进程
-                Process.Start(startInfo);
-                
-                // 关闭当前进程
+                // 正常关闭应用程序
                 Application.Current.Shutdown();
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError($"无法以普通用户身份重启: {ex.Message}");
+                NotificationService.ShowError($"无法退出应用程序: {ex.Message}");
             }
         }
         

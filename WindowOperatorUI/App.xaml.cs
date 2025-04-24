@@ -23,11 +23,23 @@ namespace WindowOperatorUI
             base.OnStartup(e);
 
             // 检查是否需要以管理员身份运行
-            if (!IsRunningAsAdmin() && ShouldRunAsAdmin())
+            bool isAdmin = IsRunningAsAdmin();
+            bool shouldBeAdmin = ShouldRunAsAdmin();
+            
+            // 如果需要管理员权限但当前不是管理员
+            if (!isAdmin && shouldBeAdmin)
             {
                 RestartAsAdmin();
                 Shutdown();
                 return;
+            }
+            // 如果当前是管理员权限但配置不需要
+            else if (isAdmin && !shouldBeAdmin)
+            {
+                // 这种情况下可能是用户手动以管理员身份启动的
+                // 不强制降权，允许程序继续运行
+                MessageBox.Show("当前以管理员身份运行，但配置中未启用此选项。\n如需以普通用户身份运行，请关闭程序后手动以普通权限重启。", 
+                    "权限提示", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
             // Check command line arguments

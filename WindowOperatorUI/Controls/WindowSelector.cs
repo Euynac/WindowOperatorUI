@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using WindowOperatorUI.Models;
+using WindowOperatorUI.Services;
 using WindowOperatorUI.Utils;
 
 namespace WindowOperatorUI.Controls
@@ -22,6 +23,9 @@ namespace WindowOperatorUI.Controls
         private Border _highlightBorder;
         private TextBlock _infoTextBlock;
         private PresentationSource _presentationSource;
+        private CheckBox _keepOriginalSizeCheckBox;
+        private CheckBox _customExePathCheckBox;
+        private TextBox _exePathTextBox;
 
         public WindowSelector()
         {
@@ -61,6 +65,54 @@ namespace WindowOperatorUI.Controls
                 Text = "移动鼠标到窗口上可显示窗口信息"
             };
             grid.Children.Add(_infoTextBlock);
+            
+            // 添加控制面板(使用Border包裹StackPanel来添加Padding)
+            var optionsBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
+                Padding = new Thickness(10),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                Margin = new Thickness(10, 0, 0, 10)
+            };
+            
+            var optionsPanel = new StackPanel
+            {
+                Orientation = Orientation.Vertical
+            };
+            
+            // 保持原始大小选项
+            _keepOriginalSizeCheckBox = new CheckBox
+            {
+                Content = "保持窗口原始大小",
+                Foreground = Brushes.White,
+                IsChecked = true,
+                Margin = new Thickness(0, 0, 0, 5)
+            };
+            optionsPanel.Children.Add(_keepOriginalSizeCheckBox);
+            
+            // 自定义路径选项
+            _customExePathCheckBox = new CheckBox
+            {
+                Content = "自定义程序路径",
+                Foreground = Brushes.White,
+                Margin = new Thickness(0, 0, 0, 5)
+            };
+            optionsPanel.Children.Add(_customExePathCheckBox);
+            
+            // 程序路径输入框
+            _exePathTextBox = new TextBox
+            {
+                Width = 300,
+                Margin = new Thickness(20, 0, 0, 0),
+                Visibility = Visibility.Collapsed
+            };
+            _customExePathCheckBox.Checked += (s, e) => _exePathTextBox.Visibility = Visibility.Visible;
+            _customExePathCheckBox.Unchecked += (s, e) => _exePathTextBox.Visibility = Visibility.Collapsed;
+            optionsPanel.Children.Add(_exePathTextBox);
+            
+            optionsBorder.Child = optionsPanel;
+            grid.Children.Add(optionsBorder);
             
             // 添加说明文本
             var instructionText = new TextBlock
@@ -161,7 +213,7 @@ namespace WindowOperatorUI.Controls
             
             // 延迟一点以确保点击穿透生效
             var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
-            timer.Tick += (s, args) =>
+            timer.Tick += (s, timerArgs) =>
             {
                 timer.Stop();
                 
@@ -179,23 +231,37 @@ namespace WindowOperatorUI.Controls
                         var process = Process.GetProcessById(processId);
                         var executablePath = process.MainModule?.FileName ?? "";
                         
+                        // 如果用户选择自定义路径，则使用自定义路径
+                        if (_customExePathCheckBox.IsChecked == true && !string.IsNullOrWhiteSpace(_exePathTextBox.Text))
+                        {
+                            executablePath = _exePathTextBox.Text;
+                        }
+                        
                         var rect = new NativeMethods.RECT();
                         NativeMethods.GetWindowRect(hwnd, ref rect);
                         
-                        // 触发事件
-                        WindowSelected?.Invoke(this, new WindowSelectedEventArgs
+                        // 创建事件参数
+                        var eventArgs = new WindowSelectedEventArgs
                         {
                             WindowHandle = hwnd,
                             ExecutablePath = executablePath,
                             X = rect.Left,
-                            Y = rect.Top,
-                            Width = rect.Right - rect.Left,
-                            Height = rect.Bottom - rect.Top
-                        });
+                            Y = rect.Top
+                        };
+                        
+                        // 如果不保持原始大小，则设置宽度和高度
+                        if (_keepOriginalSizeCheckBox.IsChecked != true)
+                        {
+                            eventArgs.Width = rect.Right - rect.Left;
+                            eventArgs.Height = rect.Bottom - rect.Top;
+                        }
+                        
+                        // 触发事件
+                        WindowSelected?.Invoke(this, eventArgs);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"获取窗口信息时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                        NotificationService.ShowError($"获取窗口信息时出错: {ex.Message}");
                         WindowSelected?.Invoke(this, new WindowSelectedEventArgs());
                     }
                 }

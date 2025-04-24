@@ -15,6 +15,8 @@ using WindowOperatorUI.Controls;
 using WindowOperatorUI.Models;
 using WindowOperatorUI.Services;
 using WindowOperatorUI.Utils;
+using System.Threading;
+using Microsoft.Win32;
 
 namespace WindowOperatorUI
 {
@@ -96,7 +98,7 @@ namespace WindowOperatorUI
         private void BtnSaveConfig_Click(object sender, RoutedEventArgs e)
         {
             SaveConfiguration();
-            MessageBox.Show("Configuration saved successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            NotificationService.ShowSuccess("Configuration saved successfully.");
         }
 
         private void BtnAddConfig_Click(object sender, RoutedEventArgs e)
@@ -127,8 +129,7 @@ namespace WindowOperatorUI
             var selectedConfigs = GetSelectedConfigurations();
             if (selectedConfigs.Count == 0)
             {
-                MessageBox.Show("No configurations selected. Please select at least one configuration to run.", 
-                    "No Selection", MessageBoxButton.OK, MessageBoxImage.Warning);
+                NotificationService.ShowWarning("No configurations selected. Please select at least one configuration to run.");
                 return;
             }
 
@@ -186,8 +187,7 @@ namespace WindowOperatorUI
             {
                 if (string.IsNullOrEmpty(config.ExePath) || !File.Exists(config.ExePath))
                 {
-                    MessageBox.Show($"The executable file does not exist: {config.ExePath}", 
-                        "File Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                    NotificationService.ShowError($"The executable file does not exist: {config.ExePath}");
                     return;
                 }
 
@@ -220,26 +220,22 @@ namespace WindowOperatorUI
 
                 if (hwnd == IntPtr.Zero)
                 {
-                    MessageBox.Show($"Could not get window handle for: {Path.GetFileName(config.ExePath)}", 
-                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    NotificationService.ShowError($"Could not get window handle for: {Path.GetFileName(config.ExePath)}");
                     return;
                 }
 
                 if (windowManager.PositionWindow(hwnd, config, windowTitle))
                 {
-                    MessageBox.Show($"Window '{windowTitle}' positioned successfully.", 
-                        "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    NotificationService.ShowSuccess($"Window '{windowTitle}' positioned successfully.");
                 }
                 else
                 {
-                    MessageBox.Show($"Failed to position window: {windowTitle}", 
-                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    NotificationService.ShowError($"Failed to position window: {windowTitle}");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error running configuration: {ex.Message}", 
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                NotificationService.ShowError($"Error running configuration: {ex.Message}");
             }
         }
 
@@ -275,6 +271,65 @@ namespace WindowOperatorUI
                 
                 _windowSelector.Show();
             }
+        }
+
+        private void BtnEditPath_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { Tag: WindowConfig config } button)
+            {
+                // Find the parent ListViewItem
+                var listViewItem = FindAncestor<ListViewItem>(button);
+                if (listViewItem == null) return;
+                
+                // Find the path edit grid in this item
+                var pathEditGrid = FindVisualChild<Grid>(listViewItem, "pathEditGrid");
+                if (pathEditGrid == null) return;
+                
+                // Toggle visibility
+                pathEditGrid.Visibility = pathEditGrid.Visibility == Visibility.Visible 
+                    ? Visibility.Collapsed 
+                    : Visibility.Visible;
+            }
+        }
+
+        private void BtnBrowseExePath_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { Tag: WindowConfig config })
+            {
+                var dialog = new OpenFileDialog
+                {
+                    Filter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*",
+                    InitialDirectory = Path.GetDirectoryName(config.ExePath)
+                };
+                
+                if (dialog.ShowDialog() == true)
+                {
+                    config.ExePath = dialog.FileName;
+                    
+                    // This is needed to refresh the UI with the new path
+                    lvWindowConfigs.Items.Refresh();
+                    
+                    // Find the parent ListViewItem
+                    var listViewItem = FindAncestor<ListViewItem>(sender as DependencyObject);
+                    if (listViewItem == null) return;
+                    
+                    // Find the TextBox in this item and update its text
+                    var txtExePath = FindVisualChild<TextBox>(listViewItem, "txtExePath");
+                    if (txtExePath != null)
+                    {
+                        txtExePath.Text = config.ExePath;
+                    }
+                }
+            }
+        }
+
+        private T FindAncestor<T>(DependencyObject current) where T : DependencyObject
+        {
+            while (current != null && !(current is T))
+            {
+                current = VisualTreeHelper.GetParent(current);
+            }
+            return current as T;
         }
 
         #region Window Event Handlers

@@ -171,8 +171,9 @@
                         </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
                             <DataTemplate>
-    <Grid>
+                                <Grid>
                                     <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
@@ -199,6 +200,14 @@
                                                     </Style>
                                                 </Button.Resources>
                                             </Button>
+                                            <Button x:Name="btnEditPath" Content="✏" Click="BtnEditPath_Click" Tag="{Binding}"
+                                                    Padding="5" Margin="0,0,5,0" ToolTip="Edit Path">
+                                                <Button.Resources>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="CornerRadius" Value="3"/>
+                                                    </Style>
+                                                </Button.Resources>
+                                            </Button>
                                             <Button x:Name="btnRunConfig" Content="▶" Click="BtnRunConfig_Click" Tag="{Binding}" 
                                                     Padding="5" Margin="0,0,5,0" ToolTip="Run">
                                                 <Button.Resources>
@@ -218,7 +227,25 @@
                                         </StackPanel>
                                     </Grid>
                                     
-                                    <Grid Grid.Row="1" Margin="0,10,0,0">
+                                    <!-- Path Edit Row (Initially Hidden) -->
+                                    <Grid Grid.Row="1" x:Name="pathEditGrid" Visibility="Collapsed" Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0" x:Name="txtExePath" Text="{Binding ExePath}" 
+                                                Padding="5" Margin="0,0,5,0"/>
+                                        <Button Grid.Column="1" Content="Browse..." Click="BtnBrowseExePath_Click" Tag="{Binding}"
+                                                Padding="5,0" Background="#3377FF" Foreground="White" BorderThickness="0">
+                                            <Button.Resources>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="CornerRadius" Value="3"/>
+                                                </Style>
+                                            </Button.Resources>
+                                        </Button>
+                                    </Grid>
+                                    
+                                    <Grid Grid.Row="2" Margin="0,10,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -248,7 +275,7 @@
                                         </StackPanel>
                                     </Grid>
                                     
-                                    <Grid Grid.Row="2" Margin="0,10,0,0">
+                                    <Grid Grid.Row="3" Margin="0,10,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -297,6 +324,6 @@
                     </Button>
                 </Grid>
             </Grid>
-    </Grid>
+        </Grid>
     </Border>
 </Window>

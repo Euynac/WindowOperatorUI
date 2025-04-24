@@ -19,6 +19,7 @@ namespace WindowOperatorUI.Controls
         private Point _endPoint;
         private bool _isSelecting = false;
         private IntPtr _selectedWindowHandle = IntPtr.Zero;
+        private IntPtr _hwndSource;
 
         public WindowSelector()
         {
@@ -57,6 +58,23 @@ namespace WindowOperatorUI.Controls
             _refreshTimer = new DispatcherTimer();
             _refreshTimer.Interval = TimeSpan.FromMilliseconds(50);
             _refreshTimer.Tick += RefreshTimer_Tick;
+            
+            // 增加在窗口加载时设置点击穿透
+            Loaded += WindowSelector_Loaded;
+        }
+        
+        private void WindowSelector_Loaded(object sender, RoutedEventArgs e)
+        {
+            // 获取窗口句柄
+            var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
+            _hwndSource = hwndSource.Handle;
+            
+            // 设置窗口为点击穿透
+            var extendedStyle = NativeMethods.GetWindowLong(_hwndSource, NativeMethods.GWL_EXSTYLE);
+            NativeMethods.SetWindowLong(
+                _hwndSource,
+                NativeMethods.GWL_EXSTYLE,
+                extendedStyle | NativeMethods.WS_EX_TRANSPARENT);
         }
 
         private void WindowSelector_KeyDown(object sender, KeyEventArgs e)
@@ -73,6 +91,20 @@ namespace WindowOperatorUI.Controls
             _startPoint = e.GetPosition(this);
             _isSelecting = true;
             _refreshTimer.Start();
+            
+            // 获取点击位置的窗口句柄
+            var point = GetScreenPoint(_startPoint);
+            var hwnd = NativeMethods.WindowFromPoint(point);
+            
+            // 确保不是选择到自己
+            if (hwnd == _hwndSource)
+            {
+                var hwndBelow = GetWindowBelowPoint(point);
+                if (hwndBelow != IntPtr.Zero)
+                {
+                    hwnd = hwndBelow;
+                }
+            }
         }
 
         private void WindowSelector_MouseMove(object sender, MouseEventArgs e)
@@ -129,7 +161,7 @@ namespace WindowOperatorUI.Controls
                 // Get the window under the cursor
                 _selectedWindowHandle = GetWindowHandleAtPosition(_endPoint);
                 
-                if (_selectedWindowHandle != IntPtr.Zero)
+                if (_selectedWindowHandle != IntPtr.Zero && _selectedWindowHandle != _hwndSource)
                 {
                     // Get window info
                     var processId = 0;
@@ -154,7 +186,7 @@ namespace WindowOperatorUI.Controls
                 }
                 else
                 {
-                    // No window selected
+                    // No window selected or selected self
                     WindowSelected?.Invoke(this, new WindowSelectedEventArgs());
                 }
                 
@@ -170,22 +202,55 @@ namespace WindowOperatorUI.Controls
 
         private IntPtr GetWindowHandleAtPosition(Point point)
         {
-            // Convert the point to screen coordinates
-            var source = PresentationSource.FromVisual(this) as HwndSource;
-            if (source == null) return IntPtr.Zero;
+            // 获取屏幕坐标
+            var screenPoint = GetScreenPoint(point);
             
-            var transform = source.CompositionTarget.TransformToDevice;
-            var screenPoint = transform.Transform(point);
+            // 获取点击位置的窗口句柄
+            var hwnd = NativeMethods.WindowFromPoint(screenPoint);
             
-            // Convert to system coordinates (which are typically in pixels)
-            var systemPoint = new NativeMethods.POINT
+            // 如果获取到的是自己，尝试获取下面的窗口
+            if (hwnd == _hwndSource)
+            {
+                hwnd = GetWindowBelowPoint(screenPoint);
+            }
+            
+            return hwnd;
+        }
+        
+        private NativeMethods.POINT GetScreenPoint(Point point)
+        {
+            // 转换为屏幕坐标
+            var screenPoint = PointToScreen(point);
+            
+            // 转换为系统坐标（通常以像素为单位）
+            return new NativeMethods.POINT
             {
                 X = (int)screenPoint.X,
                 Y = (int)screenPoint.Y
             };
+        }
+        
+        // 获取指定点位置下方的窗口（忽略自己的窗口）
+        private IntPtr GetWindowBelowPoint(NativeMethods.POINT point)
+        {
+            // 这个方法尝试获取指定点下方的窗口
+            // 我们需要临时隐藏自己的窗口来获取下方的窗口
             
-            // Get the window handle at the specified point
-            return NativeMethods.WindowFromPoint(systemPoint);
+            try
+            {
+                // 临时隐藏自己
+                NativeMethods.ShowWindow(_hwndSource, NativeMethods.SW_HIDE);
+                
+                // 获取下方的窗口
+                var hwndBelow = NativeMethods.WindowFromPoint(point);
+                
+                return hwndBelow;
+            }
+            finally
+            {
+                // 确保自己的窗口被重新显示
+                NativeMethods.ShowWindow(_hwndSource, NativeMethods.SW_SHOW);
+            }
         }
     }
 } 

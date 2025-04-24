@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
 using System.Windows;
 using WindowOperatorUI.Models;
 using WindowOperatorUI.Services;
@@ -40,14 +41,14 @@ namespace WindowOperatorUI
             {
                 // Run in background mode (no UI)
                 RunBackgroundOperations();
+                // 关闭已经通过XAML创建的窗口（如果有）
+                if (MainWindow != null)
+                {
+                    MainWindow.Close();
+                }
                 Shutdown();
             }
-            else
-            {
-                // Show the main window (UI mode)
-                var mainWindow = new MainWindow();
-                mainWindow.Show();
-            }
+            // 不再手动创建MainWindow，因为它已经通过StartupUri在XAML中声明
         }
 
         private void RunBackgroundOperations()

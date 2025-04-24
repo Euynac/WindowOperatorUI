@@ -24,10 +24,8 @@ namespace WindowOperatorUI.Controls
         private TextBlock _infoTextBlock;
         private PresentationSource _presentationSource;
         private CheckBox _keepOriginalSizeCheckBox;
-        private CheckBox _customExePathCheckBox;
-        private TextBox _exePathTextBox;
 
-        public WindowSelector()
+        public WindowSelector(bool keepOriginalSize = true)
         {
             WindowStyle = WindowStyle.None;
             AllowsTransparency = true;
@@ -86,30 +84,10 @@ namespace WindowOperatorUI.Controls
             {
                 Content = "保持窗口原始大小",
                 Foreground = Brushes.White,
-                IsChecked = true,
+                IsChecked = keepOriginalSize,
                 Margin = new Thickness(0, 0, 0, 5)
             };
             optionsPanel.Children.Add(_keepOriginalSizeCheckBox);
-            
-            // 自定义路径选项
-            _customExePathCheckBox = new CheckBox
-            {
-                Content = "自定义程序路径",
-                Foreground = Brushes.White,
-                Margin = new Thickness(0, 0, 0, 5)
-            };
-            optionsPanel.Children.Add(_customExePathCheckBox);
-            
-            // 程序路径输入框
-            _exePathTextBox = new TextBox
-            {
-                Width = 300,
-                Margin = new Thickness(20, 0, 0, 0),
-                Visibility = Visibility.Collapsed
-            };
-            _customExePathCheckBox.Checked += (s, e) => _exePathTextBox.Visibility = Visibility.Visible;
-            _customExePathCheckBox.Unchecked += (s, e) => _exePathTextBox.Visibility = Visibility.Collapsed;
-            optionsPanel.Children.Add(_exePathTextBox);
             
             optionsBorder.Child = optionsPanel;
             grid.Children.Add(optionsBorder);
@@ -230,12 +208,6 @@ namespace WindowOperatorUI.Controls
                         
                         var process = Process.GetProcessById(processId);
                         var executablePath = process.MainModule?.FileName ?? "";
-                        
-                        // 如果用户选择自定义路径，则使用自定义路径
-                        if (_customExePathCheckBox.IsChecked == true && !string.IsNullOrWhiteSpace(_exePathTextBox.Text))
-                        {
-                            executablePath = _exePathTextBox.Text;
-                        }
                         
                         var rect = new NativeMethods.RECT();
                         NativeMethods.GetWindowRect(hwnd, ref rect);

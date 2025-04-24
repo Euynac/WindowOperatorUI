@@ -22,9 +22,6 @@ namespace WindowOperatorUI.Controls
         {
             InitializeComponent();
             
-            // Set window position to bottom right of screen
-            SetWindowPosition();
-            
             // Set message
             MessageTextBlock.Text = message;
             
@@ -44,20 +41,6 @@ namespace WindowOperatorUI.Controls
             {
                 var storyboard = (Storyboard)FindResource("FadeInStoryboard");
                 storyboard.Begin(this);
-            };
-        }
-        
-        private void SetWindowPosition()
-        {
-            // Position in bottom right of screen
-            var screenWidth = SystemParameters.PrimaryScreenWidth;
-            var screenHeight = SystemParameters.PrimaryScreenHeight;
-            
-            // Set position after window is loaded to ensure correct size
-            Loaded += (s, e) =>
-            {
-                Left = screenWidth - Width - 20;
-                Top = screenHeight - Height - 40;
             };
         }
         

@@ -51,6 +51,7 @@ namespace WindowOperatorUI
                     chkSilentMode.IsChecked = _appConfig.SilentMode;
                     chkRunAtStartup.IsChecked = _appConfig.RunAtStartup;
                     chkRunAsAdmin.IsChecked = _appConfig.RunAsAdmin;
+                    chkKeepOriginalSize.IsChecked = _appConfig.KeepOriginalSize;
                     
                     // Load window configurations
                     _windowConfigs.Clear();
@@ -68,7 +69,7 @@ namespace WindowOperatorUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading configuration: {ex.Message}", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                NotificationService.ShowError($"Error loading configuration: {ex.Message}");
                 _appConfig = new AppConfig();
             }
         }
@@ -81,6 +82,7 @@ namespace WindowOperatorUI
                 _appConfig.SilentMode = chkSilentMode.IsChecked ?? false;
                 _appConfig.RunAtStartup = chkRunAtStartup.IsChecked ?? false;
                 _appConfig.RunAsAdmin = chkRunAsAdmin.IsChecked ?? false;
+                _appConfig.KeepOriginalSize = chkKeepOriginalSize.IsChecked ?? true;
                 
                 // Update window configurations
                 _appConfig.Windows = _windowConfigs.ToList();
@@ -91,7 +93,7 @@ namespace WindowOperatorUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving configuration: {ex.Message}", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                NotificationService.ShowError($"Error saving configuration: {ex.Message}");
             }
         }
 
@@ -248,7 +250,7 @@ namespace WindowOperatorUI
                 Opacity = 0.1;
                 
                 // Create and show the window selector
-                _windowSelector = new WindowSelector();
+                _windowSelector = new WindowSelector(_appConfig.KeepOriginalSize);
                 _windowSelector.WindowSelected += (s, args) =>
                 {
                     if (args.WindowHandle != IntPtr.Zero)

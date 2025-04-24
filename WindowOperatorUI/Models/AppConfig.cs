@@ -9,5 +9,6 @@ namespace WindowOperatorUI.Models
         public bool SilentMode { get; set; } = false;
         public bool RunAtStartup { get; set; } = false;
         public bool RunAsAdmin { get; set; } = false;
+        public bool KeepOriginalSize { get; set; } = true;
     }
 } 

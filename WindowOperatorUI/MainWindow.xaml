@@ -96,6 +96,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         
                         <CheckBox Grid.Row="0" Grid.Column="0" x:Name="chkSilentMode" Content="Silent Mode" 
@@ -105,6 +106,9 @@
                                  Foreground="#FFFFFF" Margin="0,0,0,5" Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
                         
                         <CheckBox Grid.Row="2" Grid.Column="0" x:Name="chkRunAsAdmin" Content="Run as Administrator" 
+                                 Foreground="#FFFFFF" Margin="0,0,0,5" Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
+                        
+                        <CheckBox Grid.Row="3" Grid.Column="0" x:Name="chkKeepOriginalSize" Content="Keep Original Window Size" 
                                  Foreground="#FFFFFF" Margin="0,0,0,5" Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
                     </Grid>
                 </StackPanel>

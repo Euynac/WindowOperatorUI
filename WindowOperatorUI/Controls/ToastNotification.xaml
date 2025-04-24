@@ -5,13 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Notification" 
-        Height="Auto" 
-        Width="350"
+        SizeToContent="WidthAndHeight"
+        MinWidth="300"
+        MaxWidth="450"
         WindowStyle="None" 
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen"
         Topmost="True">
     
     <Window.Resources>
@@ -39,16 +41,17 @@
             <!-- Icon -->
             <TextBlock x:Name="IconTextBlock" Text="&#xE7BA;" 
                        FontFamily="Segoe MDL2 Assets" 
-                       FontSize="20" 
+                       FontSize="24" 
                        Foreground="#4CAF50"
                        VerticalAlignment="Center"
-                       Margin="0,0,10,0"/>
+                       Margin="0,0,15,0"/>
             
             <!-- Message -->
             <TextBlock x:Name="MessageTextBlock" Grid.Column="1"
                        Text="Notification message" 
                        Foreground="White"
                        TextWrapping="Wrap"
+                       FontSize="14"
                        VerticalAlignment="Center"/>
             
             <!-- Close button -->

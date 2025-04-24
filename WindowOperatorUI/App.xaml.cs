@@ -120,7 +120,7 @@ namespace WindowOperatorUI
             
             for (var i = 0; i < 10; i++)
             {
-                System.Threading.Thread.Sleep(500);
+                Thread.Sleep(500);
                 process.Refresh();
                 hwnd = process.MainWindowHandle;
 

@@ -15,20 +15,20 @@ namespace WindowOperatorUI.Controls
     {
         public event EventHandler<WindowSelectedEventArgs> WindowSelected;
         private DispatcherTimer _refreshTimer;
-        private System.Windows.Point _startPoint;
-        private System.Windows.Point _endPoint;
+        private Point _startPoint;
+        private Point _endPoint;
         private bool _isSelecting = false;
         private IntPtr _selectedWindowHandle = IntPtr.Zero;
 
         public WindowSelector()
         {
-            this.WindowStyle = WindowStyle.None;
-            this.AllowsTransparency = true;
-            this.Background = System.Windows.Media.Brushes.Transparent;
-            this.Topmost = true;
-            this.WindowState = WindowState.Maximized;
-            this.ShowInTaskbar = false;
-            this.Cursor = System.Windows.Input.Cursors.Cross;
+            WindowStyle = WindowStyle.None;
+            AllowsTransparency = true;
+            Background = Brushes.Transparent;
+            Topmost = true;
+            WindowState = WindowState.Maximized;
+            ShowInTaskbar = false;
+            Cursor = Cursors.Cross;
 
             var grid = new Grid();
             grid.Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0));
@@ -37,34 +37,34 @@ namespace WindowOperatorUI.Controls
             var instructionText = new TextBlock
             {
                 Text = "Click and drag to select a window.\nPress ESC to cancel.",
-                Foreground = System.Windows.Media.Brushes.White,
+                Foreground = Brushes.White,
                 Background = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0)),
                 Padding = new Thickness(10),
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-                VerticalAlignment = System.Windows.VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, 50, 0, 0),
                 FontSize = 16
             };
             
             grid.Children.Add(instructionText);
-            this.Content = grid;
+            Content = grid;
             
-            this.KeyDown += WindowSelector_KeyDown;
-            this.MouseLeftButtonDown += WindowSelector_MouseLeftButtonDown;
-            this.MouseLeftButtonUp += WindowSelector_MouseLeftButtonUp;
-            this.MouseMove += WindowSelector_MouseMove;
+            KeyDown += WindowSelector_KeyDown;
+            MouseLeftButtonDown += WindowSelector_MouseLeftButtonDown;
+            MouseLeftButtonUp += WindowSelector_MouseLeftButtonUp;
+            MouseMove += WindowSelector_MouseMove;
 
             _refreshTimer = new DispatcherTimer();
             _refreshTimer.Interval = TimeSpan.FromMilliseconds(50);
             _refreshTimer.Tick += RefreshTimer_Tick;
         }
 
-        private void WindowSelector_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void WindowSelector_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Escape)
             {
                 WindowSelected?.Invoke(this, new WindowSelectedEventArgs());
-                this.Close();
+                Close();
             }
         }
 
@@ -75,14 +75,14 @@ namespace WindowOperatorUI.Controls
             _refreshTimer.Start();
         }
 
-        private void WindowSelector_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        private void WindowSelector_MouseMove(object sender, MouseEventArgs e)
         {
             if (_isSelecting)
             {
                 _endPoint = e.GetPosition(this);
                 
                 // Draw selection rectangle
-                var grid = this.Content as Grid;
+                var grid = Content as Grid;
                 if (grid != null)
                 {
                     // Remove any existing selection rectangle
@@ -104,11 +104,11 @@ namespace WindowOperatorUI.Controls
                     var selectionBorder = new Border
                     {
                         Name = "SelectionRectangle",
-                        BorderBrush = System.Windows.Media.Brushes.LightBlue,
+                        BorderBrush = Brushes.LightBlue,
                         BorderThickness = new Thickness(2),
                         Background = new SolidColorBrush(Color.FromArgb(30, 173, 216, 230)),
-                        HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
-                        VerticalAlignment = System.Windows.VerticalAlignment.Top,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top,
                         Margin = new Thickness(left, top, 0, 0),
                         Width = width,
                         Height = height
@@ -158,7 +158,7 @@ namespace WindowOperatorUI.Controls
                     WindowSelected?.Invoke(this, new WindowSelectedEventArgs());
                 }
                 
-                this.Close();
+                Close();
             }
         }
 
@@ -168,7 +168,7 @@ namespace WindowOperatorUI.Controls
             // during selection if more advanced feedback is desired
         }
 
-        private IntPtr GetWindowHandleAtPosition(System.Windows.Point point)
+        private IntPtr GetWindowHandleAtPosition(Point point)
         {
             // Convert the point to screen coordinates
             var source = PresentationSource.FromVisual(this) as HwndSource;

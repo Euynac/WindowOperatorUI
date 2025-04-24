@@ -21,7 +21,7 @@ namespace WindowOperatorUI
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow
     {
         private ObservableCollection<WindowConfig> _windowConfigs = [];
         private string _configPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
@@ -66,7 +66,7 @@ namespace WindowOperatorUI
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Error loading configuration: {ex.Message}", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error loading configuration: {ex.Message}", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 _appConfig = new AppConfig();
             }
         }
@@ -89,14 +89,14 @@ namespace WindowOperatorUI
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Error saving configuration: {ex.Message}", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error saving configuration: {ex.Message}", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void BtnSaveConfig_Click(object sender, RoutedEventArgs e)
         {
             SaveConfiguration();
-            System.Windows.MessageBox.Show("Configuration saved successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("Configuration saved successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void BtnAddConfig_Click(object sender, RoutedEventArgs e)
@@ -108,7 +108,7 @@ namespace WindowOperatorUI
 
         private void BtnRemoveConfig_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is System.Windows.Controls.Button { Tag: WindowConfig config })
+            if (sender is Button { Tag: WindowConfig config })
             {
                 _windowConfigs.Remove(config);
             }
@@ -116,7 +116,7 @@ namespace WindowOperatorUI
 
         private void BtnRunConfig_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is System.Windows.Controls.Button { Tag: WindowConfig config })
+            if (sender is Button { Tag: WindowConfig config })
             {
                 RunConfiguration(config);
             }
@@ -127,7 +127,7 @@ namespace WindowOperatorUI
             var selectedConfigs = GetSelectedConfigurations();
             if (selectedConfigs.Count == 0)
             {
-                System.Windows.MessageBox.Show("No configurations selected. Please select at least one configuration to run.", 
+                MessageBox.Show("No configurations selected. Please select at least one configuration to run.", 
                     "No Selection", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -144,11 +144,11 @@ namespace WindowOperatorUI
             
             foreach (var item in lvWindowConfigs.Items)
             {
-                var container = lvWindowConfigs.ItemContainerGenerator.ContainerFromItem(item) as System.Windows.Controls.ListViewItem;
+                var container = lvWindowConfigs.ItemContainerGenerator.ContainerFromItem(item) as ListViewItem;
                 if (container != null)
                 {
                     // Find the checkbox within the item template
-                    var checkBox = FindVisualChild<System.Windows.Controls.CheckBox>(container, "chkSelectConfig");
+                    var checkBox = FindVisualChild<CheckBox>(container, "chkSelectConfig");
                     if (checkBox is { IsChecked: true } && item is WindowConfig config)
                     {
                         selectedConfigs.Add(config);
@@ -186,7 +186,7 @@ namespace WindowOperatorUI
             {
                 if (string.IsNullOrEmpty(config.ExePath) || !File.Exists(config.ExePath))
                 {
-                    System.Windows.MessageBox.Show($"The executable file does not exist: {config.ExePath}", 
+                    MessageBox.Show($"The executable file does not exist: {config.ExePath}", 
                         "File Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
@@ -207,7 +207,7 @@ namespace WindowOperatorUI
                 
                 for (var i = 0; i < 10; i++)
                 {
-                    System.Threading.Thread.Sleep(500);
+                    Thread.Sleep(500);
                     process.Refresh();
                     hwnd = process.MainWindowHandle;
 
@@ -220,36 +220,36 @@ namespace WindowOperatorUI
 
                 if (hwnd == IntPtr.Zero)
                 {
-                    System.Windows.MessageBox.Show($"Could not get window handle for: {Path.GetFileName(config.ExePath)}", 
+                    MessageBox.Show($"Could not get window handle for: {Path.GetFileName(config.ExePath)}", 
                         "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
                 if (windowManager.PositionWindow(hwnd, config, windowTitle))
                 {
-                    System.Windows.MessageBox.Show($"Window '{windowTitle}' positioned successfully.", 
+                    MessageBox.Show($"Window '{windowTitle}' positioned successfully.", 
                         "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show($"Failed to position window: {windowTitle}", 
+                    MessageBox.Show($"Failed to position window: {windowTitle}", 
                         "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Error running configuration: {ex.Message}", 
+                MessageBox.Show($"Error running configuration: {ex.Message}", 
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void BtnSelectWindow_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is System.Windows.Controls.Button { Tag: WindowConfig config })
+            if (sender is Button { Tag: WindowConfig config })
             {
                 // Hide this application window temporarily
-                var opacity = this.Opacity;
-                this.Opacity = 0.1;
+                var opacity = Opacity;
+                Opacity = 0.1;
                 
                 // Create and show the window selector
                 _windowSelector = new WindowSelector();
@@ -269,7 +269,7 @@ namespace WindowOperatorUI
                     }
                     
                     // Restore the main window
-                    this.Opacity = opacity;
+                    Opacity = opacity;
                     _windowSelector = null;
                 };
                 
@@ -281,17 +281,17 @@ namespace WindowOperatorUI
         
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            this.DragMove();
+            DragMove();
         }
 
         private void BtnMinimize_Click(object sender, RoutedEventArgs e)
         {
-            this.WindowState = WindowState.Minimized;
+            WindowState = WindowState.Minimized;
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)
         {
-            this.Close();
+            Close();
         }
         
         private void AppSettings_Changed(object sender, RoutedEventArgs e)

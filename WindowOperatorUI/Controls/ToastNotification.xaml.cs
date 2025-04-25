@@ -9,6 +9,7 @@ namespace WindowOperatorUI.Controls
     public partial class ToastNotification : Window
     {
         private readonly DispatcherTimer _closeTimer;
+        private static int _activeNotificationCount = 0;
         
         public enum NotificationType
         {
@@ -17,6 +18,8 @@ namespace WindowOperatorUI.Controls
             Warning,
             Info
         }
+        
+        public event EventHandler Closed;
         
         public ToastNotification(string message, NotificationType type = NotificationType.Info, int autoCloseSeconds = 3)
         {
@@ -27,6 +30,9 @@ namespace WindowOperatorUI.Controls
             
             // Configure based on notification type
             ConfigureNotificationType(type);
+            
+            // Calculate position (based on notification count)
+            PositionWindowAtBottomOfScreen();
             
             // Start auto-close timer
             _closeTimer = new DispatcherTimer
@@ -41,6 +47,35 @@ namespace WindowOperatorUI.Controls
             {
                 var storyboard = (Storyboard)FindResource("FadeInStoryboard");
                 storyboard.Begin(this);
+            };
+        }
+        
+        private void PositionWindowAtBottomOfScreen()
+        {
+            // Track notification count
+            _activeNotificationCount++;
+            int index = _activeNotificationCount;
+            
+            // Get the work area (screen minus taskbar)
+            var workArea = SystemParameters.WorkArea;
+            
+            // Set initial position
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            
+            Loaded += (s, e) =>
+            {
+                // Get notification height with margins
+                double height = ActualHeight + 20; // Add margin
+                
+                // Calculate position from bottom of screen
+                Left = workArea.Right - ActualWidth - 20;
+                Top = workArea.Bottom - (height * index);
+            };
+            
+            // Adjust other notifications when this one is closed
+            this.Closed += (s, e) =>
+            {
+                _activeNotificationCount--;
             };
         }
         
@@ -80,6 +115,12 @@ namespace WindowOperatorUI.Controls
             var storyboard = (Storyboard)FindResource("FadeOutStoryboard");
             storyboard.Completed += (s, _) => Close();
             storyboard.Begin(this);
+        }
+        
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            Closed?.Invoke(this, EventArgs.Empty);
         }
     }
 } 

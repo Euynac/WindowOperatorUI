@@ -190,7 +190,16 @@
                                       DragOver="ConfigItem_DragOver"
                                       Background="Transparent" 
                                       Drop="ConfigItem_Drop"
-                                      Tag="{Binding}">
+                                      Tag="{Binding}"
+                                      MouseLeftButtonDown="ConfigItem_MouseLeftButtonDown">
+                                    <Grid.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Restore to Last Saved Settings" Click="MenuRestoreConfig_Click" Tag="{Binding}"/>
+                                            <MenuItem Header="Clear Width and Height" Click="MenuClearWidthHeight_Click" Tag="{Binding}"/>
+                                            <Separator/>
+                                            <MenuItem Header="Remove Configuration" Click="BtnRemoveConfig_Click" Tag="{Binding}"/>
+                                        </ContextMenu>
+                                    </Grid.ContextMenu>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
@@ -213,7 +222,7 @@
                                         
                                         <StackPanel Grid.Column="2" Orientation="Horizontal">
                                             <Button x:Name="btnSelectWindow" Content="&#xEE57;" Click="BtnSelectWindow_Click" Tag="{Binding}"
-                                                    FontFamily="Segoe MDL2 Assets" Padding="5" Margin="0,0,5,0" ToolTip="Select Window">
+                                                    FontFamily="Segoe MDL2 Assets" Padding="5,0,5,0" Margin="0,0,5,0" ToolTip="Select Window">
                                                 <Button.Resources>
                                                     <Style TargetType="Border">
                                                         <Setter Property="CornerRadius" Value="3"/>
@@ -294,22 +303,40 @@
                                         </Border>
                                     </Grid>
                                     
-                                    <!-- Path Edit Row (Initially Hidden) -->
-                                    <Grid Grid.Row="2" x:Name="pathEditGrid" Visibility="Collapsed" Margin="0,10,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBox Grid.Column="0" x:Name="txtExePath" Text="{Binding ExePath}" 
-                                                Padding="5" Margin="0,0,5,0"/>
-                                        <Button Grid.Column="1" Content="Browse..." Click="BtnBrowseExePath_Click" Tag="{Binding}"
-                                                Padding="5,0" Background="#3377FF" Foreground="White" BorderThickness="0">
-                                            <Button.Resources>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="CornerRadius" Value="3"/>
-                                                </Style>
-                                            </Button.Resources>
-                                        </Button>
+                                    <!-- Path Edit -->
+                                    <Grid x:Name="pathEditGrid" Grid.Row="2" Visibility="Collapsed">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        
+                                        <TextBlock Text="Edit Executable Path:" Foreground="#FFFFFF" Margin="0,0,0,5"/>
+                                        
+                                        <Grid Grid.Row="1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <TextBox x:Name="txtExePath" Grid.Column="0" Text="{Binding ExePath}" 
+                                                    Style="{StaticResource PathTextBoxStyle}"
+                                                    TextChanged="TxtExePath_TextChanged"
+                                                    Tag="{Binding}"/>
+                                            
+                                            <Button Grid.Column="1" Content="Browse..." 
+                                                    Click="BtnBrowseExePath_Click" 
+                                                    Tag="{Binding}" 
+                                                    Padding="8,3" 
+                                                    Background="#3377FF" 
+                                                    Foreground="White"
+                                                    BorderThickness="0">
+                                                <Button.Resources>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="CornerRadius" Value="3"/>
+                                                    </Style>
+                                                </Button.Resources>
+                                            </Button>
+                                        </Grid>
                                     </Grid>
                                     
                                     <Grid Grid.Row="3" Margin="0,10,0,0">
@@ -318,7 +345,6 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,15,0">
@@ -333,12 +359,12 @@
                                         
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,15,0">
                                             <TextBlock Text="Width:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                            <TextBox Text="{Binding Width}" Style="{StaticResource NumberTextBoxStyle}"/>
+                                            <TextBox Text="{Binding Width, TargetNullValue=''}" Style="{StaticResource NumberTextBoxStyle}"/>
                                         </StackPanel>
                                         
                                         <StackPanel Grid.Column="3" Orientation="Horizontal">
                                             <TextBlock Text="Height:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                            <TextBox Text="{Binding Height}" Style="{StaticResource NumberTextBoxStyle}"/>
+                                            <TextBox Text="{Binding Height, TargetNullValue=''}" Style="{StaticResource NumberTextBoxStyle}"/>
                                         </StackPanel>
                                     </Grid>
                                     

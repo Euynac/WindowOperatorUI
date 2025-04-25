@@ -13,7 +13,6 @@
         Background="Transparent"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
-        WindowStartupLocation="CenterScreen"
         Topmost="True">
     
     <Window.Resources>

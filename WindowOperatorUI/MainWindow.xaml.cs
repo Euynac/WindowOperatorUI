@@ -17,6 +17,7 @@ using WindowOperatorUI.Services;
 using WindowOperatorUI.Utils;
 using System.Threading;
 using Microsoft.Win32;
+using System.Text.RegularExpressions;
 
 namespace WindowOperatorUI
 {
@@ -31,6 +32,8 @@ namespace WindowOperatorUI
         private bool _isDraggingWindowSelector = false;
         private WindowSelector _windowSelector;
         private WindowManager _windowManager;
+        private Stack<WindowConfig> _deletedConfigs = new Stack<WindowConfig>(); // Stack for undo functionality
+        private WindowConfig _draggedItem; // For drag-drop reordering
 
         public MainWindow()
         {
@@ -43,6 +46,9 @@ namespace WindowOperatorUI
             
             // 检查当前是否以管理员身份运行
             UpdateAdminStatus();
+            
+            // Initialize order numbers if needed
+            UpdateConfigurationOrder();
         }
 
         private void LoadConfiguration()
@@ -64,8 +70,13 @@ namespace WindowOperatorUI
                     _windowConfigs.Clear();
                     foreach (var config in _appConfig.Windows)
                     {
+                        // Save original config for potential restore
+                        config.OriginalConfig = config.Clone();
                         _windowConfigs.Add(config);
                     }
+                    
+                    // Update configuration order
+                    UpdateConfigurationOrder();
                 }
                 else
                 {
@@ -81,6 +92,15 @@ namespace WindowOperatorUI
             }
         }
 
+        private void UpdateConfigurationOrder()
+        {
+            int orderIndex = 1;
+            foreach (var config in _windowConfigs)
+            {
+                config.Order = orderIndex++;
+            }
+        }
+
         private void SaveConfiguration()
         {
             try
@@ -93,6 +113,12 @@ namespace WindowOperatorUI
                 
                 // Update window configurations
                 _appConfig.Windows = _windowConfigs.ToList();
+                
+                // After saving, update the original config references
+                foreach (var config in _windowConfigs)
+                {
+                    config.OriginalConfig = config.Clone();
+                }
                 
                 // Save to file
                 var json = JsonSerializer.Serialize(_appConfig, new JsonSerializerOptions { WriteIndented = true });
@@ -114,14 +140,103 @@ namespace WindowOperatorUI
         {
             var newConfig = new WindowConfig();
             _windowConfigs.Add(newConfig);
+            UpdateConfigurationOrder();
             lvWindowConfigs.SelectedIndex = _windowConfigs.Count - 1;
         }
 
         private void BtnRemoveConfig_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button { Tag: WindowConfig config })
+            WindowConfig config = null;
+            
+            if (sender is Button button && button.Tag is WindowConfig buttonConfig)
             {
+                config = buttonConfig;
+            }
+            else if (sender is MenuItem menuItem && menuItem.Tag is WindowConfig menuItemConfig)
+            {
+                config = menuItemConfig;
+            }
+            
+            if (config != null)
+            {
+                // Save the config to the deleted stack before removing
+                _deletedConfigs.Push(config);
                 _windowConfigs.Remove(config);
+                UpdateConfigurationOrder();
+                
+                // Show notification with undo option
+                NotificationService.ShowInfo("Configuration removed. Click here to undo.", 5, UndoDelete);
+            }
+        }
+
+        // New method to handle undo of deleted configurations
+        private void UndoDelete()
+        {
+            if (_deletedConfigs.Count > 0)
+            {
+                var config = _deletedConfigs.Pop();
+                _windowConfigs.Add(config);
+                UpdateConfigurationOrder();
+                lvWindowConfigs.SelectedIndex = _windowConfigs.Count - 1;
+                NotificationService.ShowSuccess("Configuration restored.");
+            }
+        }
+        
+        // New method to restore configuration to original values
+        private void RestoreOriginalConfig(WindowConfig config)
+        {
+            if (config.OriginalConfig != null)
+            {
+                config.ExePath = config.OriginalConfig.ExePath;
+                config.X = config.OriginalConfig.X;
+                config.Y = config.OriginalConfig.Y;
+                config.Width = config.OriginalConfig.Width;
+                config.Height = config.OriginalConfig.Height;
+                config.EnableAlwaysOnTop = config.OriginalConfig.EnableAlwaysOnTop;
+                config.EnableAlwaysOnTopMost = config.OriginalConfig.EnableAlwaysOnTopMost;
+                config.EnableAlwaysOnBottom = config.OriginalConfig.EnableAlwaysOnBottom;
+                config.EnableMouseThrough = config.OriginalConfig.EnableMouseThrough;
+                
+                lvWindowConfigs.Items.Refresh();
+                NotificationService.ShowSuccess("Configuration restored to last saved state.");
+            }
+            else
+            {
+                NotificationService.ShowWarning("No saved configuration to restore.");
+            }
+        }
+        
+        // New method to clear Width and Height
+        private void ClearWidthHeight(WindowConfig config)
+        {
+            config.Width = null;
+            config.Height = null;
+            lvWindowConfigs.Items.Refresh();
+            NotificationService.ShowSuccess("Width and Height have been cleared.");
+        }
+
+        // Method to strip quotes from file path
+        private string StripQuotesFromPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return path;
+                
+            return path.Trim('"');
+        }
+        
+        // This method is called when a path textbox changes its value
+        private void UpdatePathWithoutQuotes(TextBox textBox, WindowConfig config)
+        {
+            if (textBox != null && config != null)
+            {
+                string path = textBox.Text;
+                string strippedPath = StripQuotesFromPath(path);
+                
+                if (path != strippedPath)
+                {
+                    textBox.Text = strippedPath;
+                    config.ExePath = strippedPath;
+                }
             }
         }
 
@@ -539,8 +654,19 @@ namespace WindowOperatorUI
             e.Effects = DragDropEffects.None;
             e.Handled = true;
             
+            // 检查是否是内部配置项拖拽
+            if (e.Data.GetDataPresent("WindowConfig"))
+            {
+                e.Effects = DragDropEffects.Move;
+                
+                // 视觉反馈 - 背景高亮
+                if (sender is Grid grid)
+                {
+                    grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                }
+            }
             // 对文件拖放提供特殊处理
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            else if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 // 必须设置为Copy才能显示正确的拖放图标
                 e.Effects = DragDropEffects.Copy;
@@ -559,8 +685,19 @@ namespace WindowOperatorUI
             e.Effects = DragDropEffects.None;
             e.Handled = true;
             
+            // 检查是否是内部配置项拖拽
+            if (e.Data.GetDataPresent("WindowConfig"))
+            {
+                e.Effects = DragDropEffects.Move;
+                
+                // 视觉反馈 - 保持高亮状态
+                if (sender is Grid grid && grid.Background == Brushes.Transparent)
+                {
+                    grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                }
+            }
             // 对文件拖放提供特殊处理
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            else if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 // 必须设置为Copy才能显示正确的拖放图标
                 e.Effects = DragDropEffects.Copy;
@@ -594,45 +731,84 @@ namespace WindowOperatorUI
                     grid.Background = Brushes.Transparent;
                 }
                 
-                // 检查是否是文件拖放
-                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                WindowConfig targetConfig = null;
+                
+                // 从Tag或其他方式获取WindowConfig
+                if (sender is FrameworkElement element)
                 {
-                    WindowConfig config = null;
-                    
-                    // 从Tag或其他方式获取WindowConfig
-                    if (sender is FrameworkElement element)
+                    targetConfig = element.Tag as WindowConfig;
+                }
+                
+                if (targetConfig == null) return;
+                
+                // 检查是否是内部配置项拖拽（重新排序）
+                if (e.Data.GetDataPresent("WindowConfig"))
+                {
+                    var draggedConfig = e.Data.GetData("WindowConfig") as WindowConfig;
+                    if (draggedConfig != null && !ReferenceEquals(draggedConfig, targetConfig))
                     {
-                        config = element.Tag as WindowConfig;
-                    }
-                    
-                    if (config != null)
-                    {
-                        // 获取拖放的文件
-                        string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                        int draggedIndex = _windowConfigs.IndexOf(draggedConfig);
+                        int targetIndex = _windowConfigs.IndexOf(targetConfig);
                         
-                        // 如果有多个文件被拖放，取第一个
-                        if (files != null && files.Length > 0)
+                        if (draggedIndex >= 0 && targetIndex >= 0)
                         {
-                            string filePath = files[0];
+                            _windowConfigs.RemoveAt(draggedIndex);
                             
-                            // 更新配置中的路径
-                            config.ExePath = filePath;
+                            // 如果目标索引大于拖动索引，需要减1（因为已经删除了一个元素）
+                            if (targetIndex > draggedIndex)
+                            {
+                                targetIndex--;
+                            }
                             
-                            // 刷新ListView显示更新后的路径
+                            _windowConfigs.Insert(targetIndex, draggedConfig);
+                            
+                            // 更新所有配置的顺序
+                            UpdateConfigurationOrder();
                             lvWindowConfigs.Items.Refresh();
-                            
-                            // 显示成功通知
-                            NotificationService.ShowSuccess($"Path updated to: {Path.GetFileName(filePath)}");
                         }
+                    }
+                }
+                // 检查是否是文件拖放
+                else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    // 获取拖放的文件
+                    string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    
+                    // 如果有多个文件被拖放，取第一个
+                    if (files != null && files.Length > 0)
+                    {
+                        string filePath = StripQuotesFromPath(files[0]);
+                        
+                        // 更新配置中的路径
+                        targetConfig.ExePath = filePath;
+                        
+                        // 刷新ListView显示更新后的路径
+                        lvWindowConfigs.Items.Refresh();
+                        
+                        // 显示成功通知
+                        NotificationService.ShowSuccess($"Path updated to: {Path.GetFileName(filePath)}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError($"Error during file drop: {ex.Message}");
+                NotificationService.ShowError($"Error during drop operation: {ex.Message}");
             }
             
             e.Handled = true;
+        }
+        
+        // New method to handle dragging of config items
+        private void ConfigItem_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Grid grid && grid.Tag is WindowConfig config)
+            {
+                _draggedItem = config;
+                
+                // Set up the drag & drop operation
+                DataObject dragData = new DataObject("WindowConfig", config);
+                DragDrop.DoDragDrop(grid, dragData, DragDropEffects.Move);
+            }
         }
         
         #endregion
@@ -736,6 +912,30 @@ namespace WindowOperatorUI
             {
                 NotificationService.ShowError($"无法检查管理员状态: {ex.Message}");
                 return false;
+            }
+        }
+
+        private void MenuRestoreConfig_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem { Tag: WindowConfig config })
+            {
+                RestoreOriginalConfig(config);
+            }
+        }
+        
+        private void MenuClearWidthHeight_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem { Tag: WindowConfig config })
+            {
+                ClearWidthHeight(config);
+            }
+        }
+
+        private void TxtExePath_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is TextBox textBox && textBox.Tag is WindowConfig config)
+            {
+                UpdatePathWithoutQuotes(textBox, config);
             }
         }
     }

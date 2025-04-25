@@ -8,11 +8,15 @@ namespace WindowOperatorUI.Models
         public int Y { get; set; } = 200;
         public int? Width { get; set; } = 360;
         public int? Height { get; set; } = 240;
-        public int? Order { get; set; } = null;
+        public int? Order { get; set; } = 0;
         public bool EnableAlwaysOnTop { get; set; } = false;
         public bool EnableAlwaysOnTopMost { get; set; } = false;
         public bool EnableAlwaysOnBottom { get; set; } = false;
         public bool EnableMouseThrough { get; set; } = false;
+        
+        // Original configuration for undo operation
+        [System.Text.Json.Serialization.JsonIgnore]
+        public WindowConfig OriginalConfig { get; set; }
         
         // Window binding properties - not saved to config file
         [System.Text.Json.Serialization.JsonIgnore]
@@ -26,5 +30,23 @@ namespace WindowOperatorUI.Models
         
         [System.Text.Json.Serialization.JsonIgnore]
         public bool IsBound => BoundWindowHandle != IntPtr.Zero;
+        
+        // Creates a deep copy of the current configuration
+        public WindowConfig Clone()
+        {
+            return new WindowConfig
+            {
+                ExePath = this.ExePath,
+                X = this.X,
+                Y = this.Y,
+                Width = this.Width,
+                Height = this.Height,
+                Order = this.Order,
+                EnableAlwaysOnTop = this.EnableAlwaysOnTop,
+                EnableAlwaysOnTopMost = this.EnableAlwaysOnTopMost,
+                EnableAlwaysOnBottom = this.EnableAlwaysOnBottom,
+                EnableMouseThrough = this.EnableMouseThrough
+            };
+        }
     }
 } 

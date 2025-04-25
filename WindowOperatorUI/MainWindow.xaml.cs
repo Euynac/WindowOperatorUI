@@ -997,5 +997,29 @@ namespace WindowOperatorUI
                 NotificationService.ShowSuccess("Configuration duplicated successfully.");
             }
         }
+
+        private void MenuOpenAppDirectory_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Get the directory where the application is running
+                string appDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                
+                if (System.IO.Directory.Exists(appDirectory))
+                {
+                    // Open Windows Explorer at the application directory
+                    Process.Start("explorer.exe", appDirectory);
+                    NotificationService.ShowSuccess("Application directory opened.");
+                }
+                else
+                {
+                    NotificationService.ShowError("Could not find the application directory.");
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.ShowError($"Error opening application directory: {ex.Message}");
+            }
+        }
     }
 }

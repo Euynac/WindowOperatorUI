@@ -198,6 +198,7 @@
                                             <MenuItem Header="Clear Width and Height" Click="MenuClearWidthHeight_Click" Tag="{Binding}"/>
                                             <Separator/>
                                             <MenuItem Header="Open in Explorer" Click="MenuOpenInExplorer_Click" Tag="{Binding}"/>
+                                            <MenuItem Header="Open Application Directory" Click="MenuOpenAppDirectory_Click"/>
                                             <MenuItem Header="Duplicate Configuration" Click="MenuDuplicateConfig_Click" Tag="{Binding}"/>
                                             <Separator/>
                                             <MenuItem Header="Remove Configuration" Click="BtnRemoveConfig_Click" Tag="{Binding}"/>

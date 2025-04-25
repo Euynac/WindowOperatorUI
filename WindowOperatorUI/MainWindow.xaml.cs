@@ -18,6 +18,7 @@ using WindowOperatorUI.Utils;
 using System.Threading;
 using Microsoft.Win32;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace WindowOperatorUI
 {
@@ -305,7 +306,7 @@ namespace WindowOperatorUI
             return null;
         }
 
-        private void RunConfiguration(WindowConfig config)
+        private async void RunConfiguration(WindowConfig config)
         {
             try
             {
@@ -324,22 +325,9 @@ namespace WindowOperatorUI
                 
                 var process = Process.Start(startInfo);
                 
-                var hwnd = IntPtr.Zero;
-                var windowTitle = string.Empty;
+                // 使用异步方法获取窗口句柄
+                var (hwnd, windowTitle) = await GetWindowHandleAsync(process);
                 
-                for (var i = 0; i < 10; i++)
-                {
-                    Thread.Sleep(500);
-                    process.Refresh();
-                    hwnd = process.MainWindowHandle;
-
-                    if (hwnd != IntPtr.Zero)
-                    {
-                        windowTitle = NativeMethods.GetWindowTitle(hwnd);
-                        break;
-                    }
-                }
-
                 if (hwnd == IntPtr.Zero)
                 {
                     NotificationService.ShowError($"Could not get window handle for: {Path.GetFileName(config.ExePath)}");
@@ -367,6 +355,37 @@ namespace WindowOperatorUI
             {
                 NotificationService.ShowError($"Error running configuration: {ex.Message}");
             }
+        }
+        
+        private Task<(IntPtr hwnd, string windowTitle)> GetWindowHandleAsync(Process process)
+        {
+            return Task.Run(() => 
+            {
+                IntPtr hwnd = IntPtr.Zero;
+                string windowTitle = string.Empty;
+                
+                for (var i = 0; i < 10; i++)
+                {
+                    Thread.Sleep(500);
+                    try
+                    {
+                        process.Refresh();
+                        hwnd = process.MainWindowHandle;
+
+                        if (hwnd != IntPtr.Zero)
+                        {
+                            windowTitle = NativeMethods.GetWindowTitle(hwnd);
+                            break;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // 忽略异常继续尝试
+                    }
+                }
+                
+                return (hwnd, windowTitle);
+            });
         }
 
         private void BtnApplyPosition_Click(object sender, RoutedEventArgs e)
@@ -611,8 +630,9 @@ namespace WindowOperatorUI
                     // 获取当前是否以管理员身份运行
                     bool isCurrentlyAdmin = IsRunningAsAdmin();
                     
-                    // 如果当前状态与请求的状态不同，询问是否重启
-                    if (isCurrentlyAdmin != isChecked)
+                    // 如果当前状态与请求的状态不同，并且用户手动更改了此设置，询问是否重启
+                    // 注意：这里添加一个检查以确保是用户操作而不是程序初始化时触发的
+                    if (isCurrentlyAdmin != isChecked && e.OriginalSource == checkBox)
                     {
                         string message = isChecked ? 
                             "需要以管理员身份重新启动程序才能使此设置生效。是否立即重启？" : 

@@ -7,6 +7,7 @@ using System.Windows;
 using WindowOperatorUI.Models;
 using WindowOperatorUI.Services;
 using WindowOperatorUI.Utils;
+using System.Threading.Tasks;
 
 namespace WindowOperatorUI
 {
@@ -22,6 +23,33 @@ namespace WindowOperatorUI
         {
             base.OnStartup(e);
 
+            // 检查命令行参数
+            bool runInBackground = false;
+            
+            if (e.Args.Length > 0)
+            {
+                foreach (var arg in e.Args)
+                {
+                    if (arg.ToLower() == "--background" || arg.ToLower() == "-b")
+                    {
+                        runInBackground = true;
+                        break;
+                    }
+                }
+            }
+
+            if (runInBackground)
+            {
+                // 在后台模式下运行，不显示UI
+                RunBackgroundOperations();
+                // 阻止MainWindow的创建/显示
+                StartupUri = null;
+                // 关闭应用程序
+                Shutdown();
+                return;
+            }
+
+            // 只有在非后台模式下才继续检查管理员权限
             // 检查是否需要以管理员身份运行
             bool isAdmin = IsRunningAsAdmin();
             bool shouldBeAdmin = ShouldRunAsAdmin();
@@ -42,33 +70,7 @@ namespace WindowOperatorUI
                     "权限提示", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
-            // Check command line arguments
-            var runInBackground = false;
-            
-            if (e.Args.Length > 0)
-            {
-                foreach (var arg in e.Args)
-                {
-                    if (arg.ToLower() == "--background" || arg.ToLower() == "-b")
-                    {
-                        runInBackground = true;
-                        break;
-                    }
-                }
-            }
-
-            if (runInBackground)
-            {
-                // Run in background mode (no UI)
-                RunBackgroundOperations();
-                // 关闭已经通过XAML创建的窗口（如果有）
-                if (MainWindow != null)
-                {
-                    MainWindow.Close();
-                }
-                Shutdown();
-            }
-            // 不再手动创建MainWindow，因为它已经通过StartupUri在XAML中声明
+            // MainWindow将通过StartupUri在XAML中创建
         }
 
         private bool IsRunningAsAdmin()
@@ -172,8 +174,9 @@ namespace WindowOperatorUI
 
                     try
                     {
-                        // This will launch and position each configured window
-                        LaunchAndConfigureWindow(windowConfig, windowManager, logger);
+                        // 使用Task.Run创建一个独立任务来启动和配置窗口
+                        // 这样每个窗口的处理都是独立的，不会互相阻塞
+                        Task.Run(() => LaunchAndConfigureWindow(windowConfig, windowManager, logger)).Wait();
                     }
                     catch (Exception ex)
                     {
@@ -189,8 +192,6 @@ namespace WindowOperatorUI
 
         private void LaunchAndConfigureWindow(WindowConfig config, WindowManager windowManager, Logger logger)
         {
-            // This method is similar to the one in Program.cs
-            // We're replicating the functionality here for the background mode
             var startInfo = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = config.ExePath,
@@ -199,23 +200,9 @@ namespace WindowOperatorUI
             };
             
             var process = System.Diagnostics.Process.Start(startInfo);
-
-            var hwnd = IntPtr.Zero;
-            var windowTitle = string.Empty;
             
-            for (var i = 0; i < 10; i++)
-            {
-                Thread.Sleep(500);
-                process.Refresh();
-                hwnd = process.MainWindowHandle;
-
-                if (hwnd != IntPtr.Zero)
-                {
-                    windowTitle = NativeMethods.GetWindowTitle(hwnd);
-                    logger.Log($"[SUCCESS] Window handle obtained: {hwnd}, Title: '{windowTitle}'");
-                    break;
-                }
-            }
+            // 使用异步方法获取窗口句柄但同步等待结果
+            var (hwnd, windowTitle) = GetWindowHandleAsync(process, logger).GetAwaiter().GetResult();
 
             if (hwnd == IntPtr.Zero)
             {
@@ -235,6 +222,38 @@ namespace WindowOperatorUI
             {
                 logger.Log($"[SUCCESS] Window '{windowTitle}' positioned successfully.");
             }
+        }
+        
+        private Task<(IntPtr hwnd, string windowTitle)> GetWindowHandleAsync(System.Diagnostics.Process process, Logger logger)
+        {
+            return Task.Run(() => 
+            {
+                IntPtr hwnd = IntPtr.Zero;
+                string windowTitle = string.Empty;
+                
+                for (var i = 0; i < 10; i++)
+                {
+                    Thread.Sleep(500);
+                    try
+                    {
+                        process.Refresh();
+                        hwnd = process.MainWindowHandle;
+
+                        if (hwnd != IntPtr.Zero)
+                        {
+                            windowTitle = NativeMethods.GetWindowTitle(hwnd);
+                            logger.Log($"[SUCCESS] Window handle obtained: {hwnd}, Title: '{windowTitle}'");
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Log($"[WARNING] Error refreshing process: {ex.Message}");
+                    }
+                }
+                
+                return (hwnd, windowTitle);
+            });
         }
 
         private void WriteToLog(string message)

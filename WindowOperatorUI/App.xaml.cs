@@ -192,35 +192,60 @@ namespace WindowOperatorUI
 
         private void LaunchAndConfigureWindow(WindowConfig config, WindowManager windowManager, Logger logger)
         {
-            var startInfo = new System.Diagnostics.ProcessStartInfo
+            try
             {
-                FileName = config.ExePath,
-                WorkingDirectory = Path.GetDirectoryName(config.ExePath),
-                UseShellExecute = true
-            };
-            
-            var process = System.Diagnostics.Process.Start(startInfo);
-            
-            // 使用异步方法获取窗口句柄但同步等待结果
-            var (hwnd, windowTitle) = GetWindowHandleAsync(process, logger).GetAwaiter().GetResult();
+                var startInfo = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = config.ExePath,
+                    WorkingDirectory = Path.GetDirectoryName(config.ExePath),
+                    UseShellExecute = true
+                };
+                
+                logger.Log($"[INFO] Launching application: {config.ExePath}");
+                var process = System.Diagnostics.Process.Start(startInfo);
+                
+                // 使用异步方法获取窗口句柄但同步等待结果
+                logger.Log($"[INFO] Waiting for window handle to be available...");
+                var (hwnd, windowTitle) = GetWindowHandleAsync(process, logger).GetAwaiter().GetResult();
 
-            if (hwnd == IntPtr.Zero)
-            {
-                logger.Log($"[ERROR] Could not obtain window handle for '{Path.GetFileName(config.ExePath)}'.", true);
-                return;
-            }
+                if (hwnd == IntPtr.Zero)
+                {
+                    logger.Log($"[ERROR] Could not obtain window handle for '{Path.GetFileName(config.ExePath)}'.", true);
+                    return;
+                }
 
-            var dimensions = $"{config.Width}x{config.Height}";
-            if (!config.Width.HasValue || !config.Height.HasValue)
-            {
-                dimensions = "original size";
+                var dimensions = "original size";
+                if (config.Width.HasValue && config.Height.HasValue)
+                {
+                    dimensions = $"{config.Width}x{config.Height}";
+                }
+                
+                logger.Log($"[INFO] Positioning window '{windowTitle}' at ({config.X}, {config.Y}), size: {dimensions}...");
+                
+                // 给应用程序一点时间初始化
+                Thread.Sleep(300);
+                
+                if (windowManager.PositionWindow(hwnd, config, windowTitle))
+                {
+                    logger.Log($"[SUCCESS] Window '{windowTitle}' positioned successfully.");
+                    
+                    // 在调整完后再检查实际大小
+                    NativeMethods.RECT rect = new NativeMethods.RECT();
+                    if (NativeMethods.GetWindowRect(hwnd, ref rect))
+                    {
+                        int width = rect.Right - rect.Left;
+                        int height = rect.Bottom - rect.Top;
+                        logger.Log($"[INFO] Final window '{windowTitle}' position: ({rect.Left}, {rect.Top}), size: {width}x{height}");
+                    }
+                }
+                else
+                {
+                    logger.Log($"[ERROR] Failed to position window '{windowTitle}'");
+                }
             }
-            
-            logger.Log($"[INFO] Positioning window '{windowTitle}' at ({config.X}, {config.Y}), {dimensions}...");
-            
-            if (windowManager.PositionWindow(hwnd, config, windowTitle))
+            catch (Exception ex)
             {
-                logger.Log($"[SUCCESS] Window '{windowTitle}' positioned successfully.");
+                logger.Log($"[ERROR] Exception during window configuration: {ex.Message}", true);
             }
         }
         

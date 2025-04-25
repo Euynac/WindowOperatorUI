@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using WindowOperatorUI.Models;
 using WindowOperatorUI.Utils;
 
@@ -7,6 +8,8 @@ namespace WindowOperatorUI.Services
     public class WindowManager
     {
         private readonly Logger _logger;
+        private const int MAX_RESIZE_RETRIES = 3;
+        private const int RESIZE_DELAY_MS = 100;
 
         public WindowManager(Logger logger)
         {
@@ -17,18 +20,109 @@ namespace WindowOperatorUI.Services
         {
             try
             {
+                // Log original window size and position for debugging
+                NativeMethods.RECT originalRect = new NativeMethods.RECT();
+                if (NativeMethods.GetWindowRect(hwnd, ref originalRect))
+                {
+                    int originalWidth = originalRect.Right - originalRect.Left;
+                    int originalHeight = originalRect.Bottom - originalRect.Top;
+                    _logger.Log($"[INFO] Window '{windowTitle}' original position: ({originalRect.Left}, {originalRect.Top}), size: {originalWidth}x{originalHeight}");
+                }
+
+                _logger.Log($"[INFO] Setting window '{windowTitle}' position to ({config.X}, {config.Y})");
+                
+                bool resizeSuccess = false;
+                
                 // First, handle size and position
                 if (config is { Width: not null, Height: not null })
                 {
-                    // Move and resize window
-                    if (!NativeMethods.MoveWindow(hwnd, config.X, config.Y, config.Width.Value, config.Height.Value, true))
+                    _logger.Log($"[INFO] Attempting to resize window '{windowTitle}' to {config.Width}x{config.Height}");
+
+                    // 尝试多次设置窗口大小，提高成功率
+                    for (int attempt = 1; attempt <= MAX_RESIZE_RETRIES; attempt++)
                     {
-                        _logger.Log($"[ERROR] Failed to move and resize window '{windowTitle}'.", true);
+                        // 先使用SetWindowPos移动窗口到目标位置（不改变大小）
+                        bool posSuccess = NativeMethods.SetWindowPos(
+                            hwnd, 
+                            IntPtr.Zero,
+                            config.X, 
+                            config.Y,
+                            0, 
+                            0,
+                            NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE
+                        );
+                        
+                        if (!posSuccess)
+                        {
+                            _logger.Log($"[WARNING] Attempt {attempt} - Failed to position window '{windowTitle}' at ({config.X}, {config.Y})");
+                        }
+                        
+                        // 短暂延迟，让窗口系统处理位置变化
+                        Thread.Sleep(RESIZE_DELAY_MS);
+                        
+                        // 然后使用MoveWindow同时设置位置和大小
+                        resizeSuccess = NativeMethods.MoveWindow(
+                            hwnd, 
+                            config.X, 
+                            config.Y,
+
+                            config.Width.Value, 
+                            config.Height.Value, 
+                            true
+                        );
+                        
+                        if (resizeSuccess)
+                        {
+                            _logger.Log($"[SUCCESS] Attempt {attempt} - Successfully resized window '{windowTitle}' to {config.Width}x{config.Height}");
+                            break;
+                        }
+                        else
+                        {
+                            _logger.Log($"[WARNING] Attempt {attempt} - Failed to resize window '{windowTitle}' using MoveWindow");
+                            
+                            // 再尝试使用SetWindowPos来设置大小
+                            resizeSuccess = NativeMethods.SetWindowPos(
+                                hwnd, 
+                                IntPtr.Zero, 
+                                config.X, 
+                                config.Y, 
+                                config.Width.Value, 
+                                config.Height.Value, 
+                                NativeMethods.SWP_NOACTIVATE
+                            );
+                            
+                            if (resizeSuccess)
+                            {
+                                _logger.Log($"[SUCCESS] Attempt {attempt} - Successfully resized window '{windowTitle}' using SetWindowPos");
+                                break;
+                            }
+                            else
+                            {
+                                _logger.Log($"[WARNING] Attempt {attempt} - Failed to resize window '{windowTitle}' using SetWindowPos");
+                            }
+                        }
+                        
+                        // 如果这不是最后一次尝试，等待一段时间再试
+                        if (attempt < MAX_RESIZE_RETRIES)
+                        {
+                            _logger.Log($"[INFO] Waiting before next resize attempt for window '{windowTitle}'");
+                            Thread.Sleep(RESIZE_DELAY_MS * 2);
+                        }
+                    }
+                    
+                    if (!resizeSuccess)
+                    {
+                        _logger.Log($"[ERROR] Failed to move and resize window '{windowTitle}' after {MAX_RESIZE_RETRIES} attempts", true);
                         return false;
                     }
+                    
+                    // 验证窗口大小是否正确设置
+                    VerifyWindowSizeAndPosition(hwnd, config, windowTitle);
                 }
                 else
                 {
+                    _logger.Log($"[INFO] Moving window '{windowTitle}' without resizing");
+                    
                     // Only move window without resizing
                     if (!NativeMethods.SetWindowPos(hwnd, IntPtr.Zero, config.X, config.Y, 0, 0, 
                         NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE))
@@ -36,6 +130,8 @@ namespace WindowOperatorUI.Services
                         _logger.Log($"[ERROR] Failed to move window '{windowTitle}'.", true);
                         return false;
                     }
+                    
+                    _logger.Log($"[SUCCESS] Successfully moved window '{windowTitle}' to ({config.X}, {config.Y})");
                 }
 
                 // Handle Z-order and window style
@@ -53,6 +149,43 @@ namespace WindowOperatorUI.Services
             {
                 _logger.Log($"[ERROR] Failed to position window '{windowTitle}': {ex.Message}", true);
                 return false;
+            }
+        }
+        
+        private void VerifyWindowSizeAndPosition(IntPtr hwnd, WindowConfig config, string windowTitle)
+        {
+            // 验证窗口大小是否符合预期
+            NativeMethods.RECT rect = new NativeMethods.RECT();
+            if (NativeMethods.GetWindowRect(hwnd, ref rect))
+            {
+                int width = rect.Right - rect.Left;
+                int height = rect.Bottom - rect.Top;
+                
+                _logger.Log($"[INFO] After resize: Window '{windowTitle}' position is ({rect.Left}, {rect.Top}), size is {width}x{height}");
+                
+                bool sizeMatchesExpected = true;
+                
+                // 允许1像素的误差，避免舍入问题
+                if (Math.Abs(width - config.Width.Value) > 1)
+                {
+                    _logger.Log($"[WARNING] Width mismatch for window '{windowTitle}': expected {config.Width.Value}, got {width}");
+                    sizeMatchesExpected = false;
+                }
+                
+                if (Math.Abs(height - config.Height.Value) > 1)
+                {
+                    _logger.Log($"[WARNING] Height mismatch for window '{windowTitle}': expected {config.Height.Value}, got {height}");
+                    sizeMatchesExpected = false;
+                }
+                
+                if (sizeMatchesExpected)
+                {
+                    _logger.Log($"[SUCCESS] Window '{windowTitle}' size verification passed");
+                }
+            }
+            else
+            {
+                _logger.Log($"[WARNING] Could not verify window '{windowTitle}' size after resize");
             }
         }
 

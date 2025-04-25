@@ -401,9 +401,46 @@ namespace WindowOperatorUI
                         return;
                     }
                     
+                    // 使用 NativeMethods 查询当前窗口位置和大小，用作比较和日志记录
+                    NativeMethods.RECT originalRect = new NativeMethods.RECT();
+                    string currentSize = "Unknown";
+                    string currentPosition = "Unknown";
+                    
+                    if (NativeMethods.GetWindowRect(config.BoundWindowHandle, ref originalRect))
+                    {
+                        int originalWidth = originalRect.Right - originalRect.Left;
+                        int originalHeight = originalRect.Bottom - originalRect.Top;
+                        currentSize = $"{originalWidth}x{originalHeight}";
+                        currentPosition = $"({originalRect.Left}, {originalRect.Top})";
+                    }
+                    
+                    string targetSize = config.Width.HasValue && config.Height.HasValue
+                        ? $"{config.Width}x{config.Height}"
+                        : "unchanged";
+                        
+                    string targetPosition = $"({config.X}, {config.Y})";
+                    
+                    // 显示当前和目标值，便于诊断
+                    string message = $"Applying: Position {currentPosition} → {targetPosition}, Size {currentSize} → {targetSize}";
+                    NotificationService.ShowInfo(message, 2);
+                    
                     if (_windowManager.PositionWindow(config.BoundWindowHandle, config, config.BoundWindowTitle))
                     {
-                        NotificationService.ShowSuccess($"Updated position for window: {config.BoundWindowTitle}");
+                        // 检查更新后的窗口位置和大小
+                        if (NativeMethods.GetWindowRect(config.BoundWindowHandle, ref originalRect))
+                        {
+                            int newWidth = originalRect.Right - originalRect.Left;
+                            int newHeight = originalRect.Bottom - originalRect.Top;
+                            string newSize = $"{newWidth}x{newHeight}";
+                            string newPosition = $"({originalRect.Left}, {originalRect.Top})";
+                            
+                            string resultMessage = $"Updated window: Position {newPosition}, Size {newSize}";
+                            NotificationService.ShowSuccess(resultMessage);
+                        }
+                        else
+                        {
+                            NotificationService.ShowSuccess($"Updated position for window: {config.BoundWindowTitle}");
+                        }
                     }
                     else
                     {

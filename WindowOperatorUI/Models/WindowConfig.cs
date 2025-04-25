@@ -11,6 +11,20 @@ namespace WindowOperatorUI.Models
         public int? Order { get; set; } = null;
         public bool EnableAlwaysOnTop { get; set; } = false;
         public bool EnableAlwaysOnTopMost { get; set; } = false;
+        public bool EnableAlwaysOnBottom { get; set; } = false;
         public bool EnableMouseThrough { get; set; } = false;
+        
+        // Window binding properties - not saved to config file
+        [System.Text.Json.Serialization.JsonIgnore]
+        public IntPtr BoundWindowHandle { get; set; } = IntPtr.Zero;
+        
+        [System.Text.Json.Serialization.JsonIgnore]
+        public int BoundProcessId { get; set; } = 0;
+        
+        [System.Text.Json.Serialization.JsonIgnore]
+        public string BoundWindowTitle { get; set; } = string.Empty;
+        
+        [System.Text.Json.Serialization.JsonIgnore]
+        public bool IsBound => BoundWindowHandle != IntPtr.Zero;
     }
 } 

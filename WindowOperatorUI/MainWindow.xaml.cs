@@ -30,12 +30,16 @@ namespace WindowOperatorUI
         private AppConfig _appConfig;
         private bool _isDraggingWindowSelector = false;
         private WindowSelector _windowSelector;
+        private WindowManager _windowManager;
 
         public MainWindow()
         {
             InitializeComponent();
             LoadConfiguration();
             lvWindowConfigs.ItemsSource = _windowConfigs;
+            
+            // Initialize the window manager with a logger
+            _windowManager = new WindowManager(new ConsoleLogger());
             
             // 检查当前是否以管理员身份运行
             UpdateAdminStatus();
@@ -192,11 +196,9 @@ namespace WindowOperatorUI
             {
                 if (string.IsNullOrEmpty(config.ExePath) || !File.Exists(config.ExePath))
                 {
-                    NotificationService.ShowError($"The executable file does not exist: {config.ExePath}");
+                    NotificationService.ShowError($"File not found: {config.ExePath}");
                     return;
                 }
-
-                var windowManager = new WindowManager(new ConsoleLogger());
                 
                 var startInfo = new ProcessStartInfo
                 {
@@ -229,9 +231,17 @@ namespace WindowOperatorUI
                     return;
                 }
 
-                if (windowManager.PositionWindow(hwnd, config, windowTitle))
+                if (_windowManager.PositionWindow(hwnd, config, windowTitle))
                 {
-                    NotificationService.ShowSuccess($"Window '{windowTitle}' positioned successfully.");
+                    // Store window binding information
+                    config.BoundWindowHandle = hwnd;
+                    config.BoundProcessId = process.Id;
+                    config.BoundWindowTitle = windowTitle;
+                    
+                    // Refresh the list view to show bound window controls
+                    lvWindowConfigs.Items.Refresh();
+                    
+                    NotificationService.ShowSuccess($"Window '{windowTitle}' positioned successfully and bound to configuration.");
                 }
                 else
                 {
@@ -242,6 +252,104 @@ namespace WindowOperatorUI
             {
                 NotificationService.ShowError($"Error running configuration: {ex.Message}");
             }
+        }
+
+        private void BtnApplyPosition_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { Tag: WindowConfig config })
+            {
+                try
+                {
+                    if (!IsWindowHandleValid(config.BoundWindowHandle))
+                    {
+                        NotificationService.ShowError("Window is no longer available. Unbinding...");
+                        UnbindWindow(config);
+                        return;
+                    }
+                    
+                    if (_windowManager.PositionWindow(config.BoundWindowHandle, config, config.BoundWindowTitle))
+                    {
+                        NotificationService.ShowSuccess($"Updated position for window: {config.BoundWindowTitle}");
+                    }
+                    else
+                    {
+                        NotificationService.ShowError($"Failed to update position for window: {config.BoundWindowTitle}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    NotificationService.ShowError($"Error applying position: {ex.Message}");
+                }
+            }
+        }
+        
+        private void BtnUpdateZOrder_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { Tag: WindowConfig config })
+            {
+                try
+                {
+                    if (!IsWindowHandleValid(config.BoundWindowHandle))
+                    {
+                        NotificationService.ShowError("Window is no longer available. Unbinding...");
+                        UnbindWindow(config);
+                        return;
+                    }
+                    
+                    // Just update Z-Order without changing position or size
+                    var flags = NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE;
+                    var hwnd = config.BoundWindowHandle;
+                    
+                    // First reset window Z-order to non-topmost
+                    NativeMethods.SetWindowPos(hwnd, NativeMethods.HWND_NOTOPMOST, 0, 0, 0, 0, flags);
+                    
+                    // Handle bottom positioning
+                    if (config.EnableAlwaysOnBottom)
+                    {
+                        NativeMethods.SetWindowPos(hwnd, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flags);
+                    }
+                    // Process topmost state
+                    else if (config.EnableAlwaysOnTopMost)
+                    {
+                        NativeMethods.SetWindowPos(hwnd, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0, flags);
+                    }
+                    else if (config.EnableAlwaysOnTop)
+                    {
+                        NativeMethods.SetWindowPos(hwnd, NativeMethods.HWND_TOP, 0, 0, 0, 0, flags);
+                    }
+                    
+                    NotificationService.ShowSuccess($"Updated Z-order for window: {config.BoundWindowTitle}");
+                }
+                catch (Exception ex)
+                {
+                    NotificationService.ShowError($"Error updating Z-order: {ex.Message}");
+                }
+            }
+        }
+        
+        private void BtnUnbindWindow_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { Tag: WindowConfig config })
+            {
+                UnbindWindow(config);
+                NotificationService.ShowInfo($"Window unbound from configuration.");
+            }
+        }
+        
+        private void UnbindWindow(WindowConfig config)
+        {
+            config.BoundWindowHandle = IntPtr.Zero;
+            config.BoundProcessId = 0;
+            config.BoundWindowTitle = string.Empty;
+            lvWindowConfigs.Items.Refresh();
+        }
+        
+        private bool IsWindowHandleValid(IntPtr hwnd)
+        {
+            if (hwnd == IntPtr.Zero)
+                return false;
+                
+            return NativeMethods.IsWindow(hwnd);
         }
 
         private void BtnSelectWindow_Click(object sender, RoutedEventArgs e)

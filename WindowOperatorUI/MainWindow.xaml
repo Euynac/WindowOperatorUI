@@ -13,6 +13,8 @@
         ResizeMode="CanResizeWithGrip">
     
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        
         <Style x:Key="WindowButtonStyle" TargetType="Button">
             <Setter Property="Template">
                 <Setter.Value>
@@ -194,6 +196,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     
                                     <Grid Grid.Row="0">
@@ -244,8 +247,55 @@
                                         </StackPanel>
                                     </Grid>
                                     
+                                    <!-- Bound Window Section (Shows when window is bound) -->
+                                    <Grid Grid.Row="1" Margin="0,10,0,0" Visibility="{Binding IsBound, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Border Background="#33444444" BorderBrush="#44FFFFFF" BorderThickness="1" CornerRadius="4" Padding="8">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                
+                                                <TextBlock Grid.Row="0" Text="{Binding BoundWindowTitle, StringFormat='Bound to: {0}'}" 
+                                                           Foreground="#AAFFFFFF" FontSize="12" Margin="0,0,0,8"/>
+                                                
+                                                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                                    <Button Content="Apply Size/Pos" Click="BtnApplyPosition_Click" Tag="{Binding}"
+                                                            Padding="8,3" Margin="0,0,8,0" Background="#3377FF" Foreground="White" 
+                                                            BorderThickness="0" FontSize="11">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+                                                    
+                                                    <Button Content="Update Z-Order" Click="BtnUpdateZOrder_Click" Tag="{Binding}"
+                                                            Padding="8,3" Margin="0,0,8,0" Background="#3377FF" Foreground="White"
+                                                            BorderThickness="0" FontSize="11">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+                                                    
+                                                    <Button Content="Unbind" Click="BtnUnbindWindow_Click" Tag="{Binding}"
+                                                            Padding="8,3" Background="#E53935" Foreground="White"
+                                                            BorderThickness="0" FontSize="11">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                    
                                     <!-- Path Edit Row (Initially Hidden) -->
-                                    <Grid Grid.Row="1" x:Name="pathEditGrid" Visibility="Collapsed" Margin="0,10,0,0">
+                                    <Grid Grid.Row="2" x:Name="pathEditGrid" Visibility="Collapsed" Margin="0,10,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -262,7 +312,7 @@
                                         </Button>
                                     </Grid>
                                     
-                                    <Grid Grid.Row="2" Margin="0,10,0,0">
+                                    <Grid Grid.Row="3" Margin="0,10,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -292,8 +342,9 @@
                                         </StackPanel>
                                     </Grid>
                                     
-                                    <Grid Grid.Row="3" Margin="0,10,0,0">
+                                    <Grid Grid.Row="4" Margin="0,10,0,0">
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -305,7 +356,10 @@
                                         <CheckBox Grid.Column="1" Content="Topmost" IsChecked="{Binding EnableAlwaysOnTopMost}" 
                                                  Foreground="#FFFFFF" Margin="0,0,15,0"/>
                                         
-                                        <CheckBox Grid.Column="2" Content="Mouse Through" IsChecked="{Binding EnableMouseThrough}" 
+                                        <CheckBox Grid.Column="2" Content="Always on Bottom" IsChecked="{Binding EnableAlwaysOnBottom}" 
+                                                 Foreground="#FFFFFF" Margin="0,0,15,0"/>
+                                        
+                                        <CheckBox Grid.Column="3" Content="Mouse Through" IsChecked="{Binding EnableMouseThrough}" 
                                                  Foreground="#FFFFFF"/>
                                     </Grid>
                                 </Grid>

@@ -58,34 +58,43 @@ namespace WindowOperatorUI.Services
 
         private void SetWindowZOrder(IntPtr hwnd, WindowConfig config, string windowTitle)
         {
-            var zOrderPosition = IntPtr.Zero;
+            var flags = NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE;
+            
+            // First reset the window's Z-order to non-topmost to ensure we're starting from a clean state
+            // This helps with windows that might already be in a topmost state
+            NativeMethods.SetWindowPos(hwnd, NativeMethods.HWND_NOTOPMOST, 0, 0, 0, 0, flags);
+            _logger.Log($"[INFO] Reset Z-order of window '{windowTitle}' to non-topmost state");
+            
+            // Handle bottom positioning
+            if (config.EnableAlwaysOnBottom || (config.Order.HasValue && config.Order.Value <= 0))
+            {
+                NativeMethods.SetWindowPos(hwnd, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flags);
+                _logger.Log($"[INFO] Set window '{windowTitle}' to bottom of Z-order");
+                return; // Skip other positioning if we're setting to bottom
+            }
             
             // Process topmost state regardless of Order value
             if (config.EnableAlwaysOnTopMost)
             {
-                zOrderPosition = NativeMethods.HWND_TOPMOST;
                 _logger.Log($"[INFO] Setting window '{windowTitle}' to be always on top most (above system windows)");
                 
-                var flags = NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE;
-                if (!NativeMethods.SetWindowPos(hwnd, zOrderPosition, 0, 0, 0, 0, flags))
+                if (!NativeMethods.SetWindowPos(hwnd, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0, flags))
                 {
                     _logger.Log($"[ERROR] Failed to set window '{windowTitle}' as topmost", true);
                 }
             }
             else if (config.EnableAlwaysOnTop)
             {
-                zOrderPosition = NativeMethods.HWND_TOP;
                 _logger.Log($"[INFO] Setting window '{windowTitle}' always on top of normal windows");
                 
-                var flags = NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE;
-                if (!NativeMethods.SetWindowPos(hwnd, zOrderPosition, 0, 0, 0, 0, flags))
+                if (!NativeMethods.SetWindowPos(hwnd, NativeMethods.HWND_TOP, 0, 0, 0, 0, flags))
                 {
                     _logger.Log($"[ERROR] Failed to set window '{windowTitle}' as always on top", true);
                 }
             }
             
             // Handle Order if specified (this is separate from topmost setting)
-            if (config.Order.HasValue)
+            if (config.Order.HasValue && config.Order.Value > 0)
             {
                 _logger.Log($"[INFO] Set window '{windowTitle}' Z-order to {config.Order.Value}");
                 // Note: Windows doesn't support exact Z-order numbers, but this could be extended

@@ -65,6 +65,9 @@ namespace WindowOperatorUI.Utils
         
         [DllImport("user32.dll")]
         public static extern bool GetCursorPos(ref POINT lpPoint);
+        
+        [DllImport("user32.dll")]
+        public static extern bool IsWindow(IntPtr hWnd);
 
         [StructLayout(LayoutKind.Sequential)]
         public struct POINT

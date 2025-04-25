@@ -35,10 +35,13 @@ namespace WindowOperatorUI
         private WindowManager _windowManager;
         private Stack<WindowConfig> _deletedConfigs = new Stack<WindowConfig>(); // Stack for undo functionality
         private WindowConfig _draggedItem; // For drag-drop reordering
+        private bool _isInitializing = true; // 添加标志以防止初始化触发事件
 
         public MainWindow()
         {
             InitializeComponent();
+            _isInitializing = true; // 设置初始化标志
+            
             LoadConfiguration();
             lvWindowConfigs.ItemsSource = _windowConfigs;
             
@@ -50,6 +53,8 @@ namespace WindowOperatorUI
             
             // Initialize order numbers if needed
             UpdateConfigurationOrder();
+            
+            _isInitializing = false; // 初始化完成后关闭标志
         }
 
         private void LoadConfiguration()
@@ -61,11 +66,23 @@ namespace WindowOperatorUI
                     var json = File.ReadAllText(_configPath);
                     _appConfig = JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
                     
-                    // Update UI based on config
-                    chkSilentMode.IsChecked = _appConfig.SilentMode;
-                    chkRunAtStartup.IsChecked = _appConfig.RunAtStartup;
-                    chkRunAsAdmin.IsChecked = _appConfig.RunAsAdmin;
-                    chkKeepOriginalSize.IsChecked = _appConfig.KeepOriginalSize;
+                    // 确保在设置UI状态时不会触发事件
+                    bool oldInitializing = _isInitializing;
+                    _isInitializing = true;
+                    
+                    try
+                    {
+                        // Update UI based on config
+                        chkSilentMode.IsChecked = _appConfig.SilentMode;
+                        chkRunAtStartup.IsChecked = _appConfig.RunAtStartup;
+                        chkRunAsAdmin.IsChecked = _appConfig.RunAsAdmin;
+                        chkKeepOriginalSize.IsChecked = _appConfig.KeepOriginalSize;
+                    }
+                    finally
+                    {
+                        // 恢复初始化状态标志
+                        _isInitializing = oldInitializing;
+                    }
                     
                     // Load window configurations
                     _windowConfigs.Clear();
@@ -644,6 +661,10 @@ namespace WindowOperatorUI
         
         private void AppSettings_Changed(object sender, RoutedEventArgs e)
         {
+            // 如果当前正在初始化，忽略所有设置变更事件
+            if (_isInitializing)
+                return;
+                
             // 当应用设置改变时，实时更新 _appConfig 对象中的值
             if (sender is CheckBox checkBox)
             {
@@ -668,8 +689,8 @@ namespace WindowOperatorUI
                     bool isCurrentlyAdmin = IsRunningAsAdmin();
                     
                     // 如果当前状态与请求的状态不同，并且用户手动更改了此设置，询问是否重启
-                    // 注意：这里添加一个检查以确保是用户操作而不是程序初始化时触发的
-                    if (isCurrentlyAdmin != isChecked && e.OriginalSource == checkBox)
+                    // 现在我们使用_isInitializing标志完全避免初始化时触发这段代码
+                    if (isCurrentlyAdmin != isChecked)
                     {
                         string message = isChecked ? 
                             "需要以管理员身份重新启动程序才能使此设置生效。是否立即重启？" : 
@@ -932,20 +953,32 @@ namespace WindowOperatorUI
                 // 检查是否具有管理员权限
                 bool isAdmin = principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
                 
-                // 更新UI显示
-                chkRunAsAdmin.IsChecked = isAdmin;
+                // 暂时禁用事件处理
+                bool oldInitializing = _isInitializing;
+                _isInitializing = true;
                 
-                // 如果当前是管理员权限运行，更新配置
-                if (isAdmin && _appConfig != null)
+                try
                 {
-                    _appConfig.RunAsAdmin = true;
+                    // 更新UI显示
+                    chkRunAsAdmin.IsChecked = isAdmin;
+                    
+                    // 如果当前是管理员权限运行，更新配置
+                    if (isAdmin && _appConfig != null)
+                    {
+                        _appConfig.RunAsAdmin = true;
+                    }
+                    
+                    // 添加管理员状态提示
+                    if (isAdmin)
+                    {
+                        chkRunAsAdmin.Content = "以管理员身份运行 (当前已启用)";
+                        chkRunAsAdmin.Foreground = new SolidColorBrush(Colors.LightGreen);
+                    }
                 }
-                
-                // 添加管理员状态提示
-                if (isAdmin)
+                finally
                 {
-                    chkRunAsAdmin.Content = "以管理员身份运行 (当前已启用)";
-                    chkRunAsAdmin.Foreground = new SolidColorBrush(Colors.LightGreen);
+                    // 恢复原始初始化状态
+                    _isInitializing = oldInitializing;
                 }
             }
             catch (Exception ex)

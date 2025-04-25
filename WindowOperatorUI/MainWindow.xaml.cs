@@ -938,5 +938,64 @@ namespace WindowOperatorUI
                 UpdatePathWithoutQuotes(textBox, config);
             }
         }
+
+        private void MenuOpenInExplorer_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem { Tag: WindowConfig config })
+            {
+                try
+                {
+                    string path = config.ExePath;
+                    if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path))
+                    {
+                        NotificationService.ShowWarning("Invalid file path. Cannot open directory.");
+                        return;
+                    }
+                    
+                    string directory = System.IO.Path.GetDirectoryName(path);
+                    if (System.IO.Directory.Exists(directory))
+                    {
+                        // Open Windows Explorer at the file's directory and select the file
+                        Process.Start("explorer.exe", $"/select,\"{path}\"");
+                    }
+                    else
+                    {
+                        NotificationService.ShowError($"Directory not found: {directory}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    NotificationService.ShowError($"Error opening explorer: {ex.Message}");
+                }
+            }
+        }
+        
+        private void MenuDuplicateConfig_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem { Tag: WindowConfig config })
+            {
+                // Create a deep copy of the configuration
+                var duplicatedConfig = config.Clone();
+                
+                // Ensure it's seen as a new config (reset bound window info)
+                duplicatedConfig.BoundWindowHandle = IntPtr.Zero;
+                duplicatedConfig.BoundProcessId = 0;
+                duplicatedConfig.BoundWindowTitle = string.Empty;
+                
+                // Add to collection
+                _windowConfigs.Add(duplicatedConfig);
+                
+                // Update order of all configurations
+                UpdateConfigurationOrder();
+                
+                // Refresh the UI
+                lvWindowConfigs.Items.Refresh();
+                
+                // Select the new configuration
+                lvWindowConfigs.SelectedIndex = _windowConfigs.Count - 1;
+                
+                NotificationService.ShowSuccess("Configuration duplicated successfully.");
+            }
+        }
     }
 }

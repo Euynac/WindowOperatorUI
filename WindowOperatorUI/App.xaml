@@ -324,7 +324,7 @@
                         <Grid Margin="10">
                             <Rectangle Name="ShadowRectangle" Fill="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
                                 <Rectangle.Effect>
-                                    <DropShadowEffect BlurRadius="15" ShadowDepth="0" Color="Black" Opacity="0.7"/>
+                                    <DropShadowEffect BlurRadius="15" ShadowDepth="0" Color="Black" />
                                 </Rectangle.Effect>
                             </Rectangle>
                             <Border Background="{TemplateBinding Background}"

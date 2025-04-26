@@ -113,7 +113,7 @@ namespace WindowOperatorUI.Controls
             // 添加说明文本
             var instructionText = new TextBlock
             {
-                Text = "Move mouse to select a window and click to confirm.\nPress ESC to cancel.",
+                Text = "Move mouse to select a window and click or press Enter to confirm.\nPress ESC to cancel.",
                 Foreground = Brushes.White,
                 Background = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0)),
                 Padding = new Thickness(10),
@@ -194,6 +194,50 @@ namespace WindowOperatorUI.Controls
             {
                 _highlightTimer.Stop();
                 WindowSelected?.Invoke(this, new WindowSelectedEventArgs());
+                Close();
+            }
+            else if (e.Key == Key.Enter && _currentHighlightedWindow != IntPtr.Zero)
+            {
+                // Enter key pressed and a window is highlighted
+                _highlightTimer.Stop();
+                
+                try
+                {
+                    // Get window information for currently highlighted window
+                    var processId = 0;
+                    NativeMethods.GetWindowThreadProcessId(_currentHighlightedWindow, out processId);
+                    
+                    var process = Process.GetProcessById(processId);
+                    var executablePath = process.MainModule?.FileName ?? "";
+                    
+                    var rect = new NativeMethods.RECT();
+                    NativeMethods.GetWindowRect(_currentHighlightedWindow, ref rect);
+                    
+                    // Create event args
+                    var eventArgs = new WindowSelectedEventArgs
+                    {
+                        WindowHandle = _currentHighlightedWindow,
+                        ExecutablePath = executablePath,
+                        X = rect.Left,
+                        Y = rect.Top
+                    };
+                    
+                    // If "keep original size" is not checked, set width and height
+                    if (_keepOriginalSizeCheckBox.IsChecked != true)
+                    {
+                        eventArgs.Width = rect.Right - rect.Left;
+                        eventArgs.Height = rect.Bottom - rect.Top;
+                    }
+                    
+                    // Trigger the event
+                    WindowSelected?.Invoke(this, eventArgs);
+                }
+                catch (Exception ex)
+                {
+                    NotificationService.ShowError($"Error getting window information: {ex.Message}");
+                    WindowSelected?.Invoke(this, new WindowSelectedEventArgs());
+                }
+                
                 Close();
             }
         }

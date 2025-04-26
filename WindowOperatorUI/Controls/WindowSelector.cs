@@ -73,7 +73,7 @@ namespace WindowOperatorUI.Controls
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top,
                 FontSize = 12,
-                Text = "移动鼠标到窗口上可显示窗口信息"
+                Text = "Move mouse over a window to display information"
             };
             grid.Children.Add(_infoTextBlock);
             
@@ -95,7 +95,7 @@ namespace WindowOperatorUI.Controls
             // 保持原始大小选项
             _keepOriginalSizeCheckBox = new CheckBox
             {
-                Content = "保持窗口原始大小",
+                Content = "Keep original window size",
                 Foreground = Brushes.White,
                 IsChecked = keepOriginalSize,
                 Margin = new Thickness(0, 0, 0, 5)
@@ -113,7 +113,7 @@ namespace WindowOperatorUI.Controls
             // 添加说明文本
             var instructionText = new TextBlock
             {
-                Text = "移动鼠标选择窗口，点击鼠标左键确认选择。\n按ESC取消选择。",
+                Text = "Move mouse to select a window and click to confirm.\nPress ESC to cancel.",
                 Foreground = Brushes.White,
                 Background = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0)),
                 Padding = new Thickness(10),
@@ -341,7 +341,7 @@ namespace WindowOperatorUI.Controls
                 {
                     // 如果没有找到窗口或是自己，隐藏高亮框
                     _highlightBorder.Visibility = Visibility.Hidden;
-                    _infoTextBlock.Text = "移动鼠标到窗口上可显示窗口信息";
+                    _infoTextBlock.Text = "Move mouse over a window to display information";
                     _currentHighlightedWindow = IntPtr.Zero;
                 }
             }

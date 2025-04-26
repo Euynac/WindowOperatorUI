@@ -703,12 +703,12 @@ namespace WindowOperatorUI
                     if (isCurrentlyAdmin != isChecked)
                     {
                         var message = isChecked ? 
-                            "需要以管理员身份重新启动程序才能使此设置生效。是否立即重启？" : 
-                            "需要以普通用户身份重新启动程序才能使此设置生效。是否立即重启？";
+                            "The application needs to restart with administrator privileges to apply this setting. Restart now?" : 
+                            "The application needs to restart with normal user privileges to apply this setting. Restart now?";
                         
                         var result = MessageBox.Show(
                             message, 
-                            "权限变更", 
+                            "Permission Change", 
                             MessageBoxButton.YesNo, 
                             MessageBoxImage.Question);
                         
@@ -1018,7 +1018,7 @@ namespace WindowOperatorUI
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError($"无法以管理员身份重启: {ex.Message}");
+                NotificationService.ShowError($"Failed to restart as administrator: {ex.Message}");
             }
         }
         
@@ -1030,15 +1030,15 @@ namespace WindowOperatorUI
                 SaveConfiguration();
                 
                 // 显示提示消息
-                MessageBox.Show("应用程序将关闭。请手动以普通用户身份重新启动应用程序。", 
-                    "权限降级", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("The application will close. Please restart it manually with normal user privileges.", 
+                    "Permission Downgrade", MessageBoxButton.OK, MessageBoxImage.Information);
                 
                 // 正常关闭应用程序
                 Application.Current.Shutdown();
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError($"无法退出应用程序: {ex.Message}");
+                NotificationService.ShowError($"Failed to exit application: {ex.Message}");
             }
         }
         
@@ -1073,7 +1073,7 @@ namespace WindowOperatorUI
                     // 添加管理员状态提示
                     if (isAdmin)
                     {
-                        chkRunAsAdmin.Content = "以管理员身份运行 (当前已启用)";
+                        chkRunAsAdmin.Content = "Run as Administrator (Currently Enabled)";
                         chkRunAsAdmin.Foreground = new SolidColorBrush(Colors.LightGreen);
                     }
                 }
@@ -1085,7 +1085,7 @@ namespace WindowOperatorUI
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError($"无法检查管理员状态: {ex.Message}");
+                NotificationService.ShowError($"Failed to check administrator status: {ex.Message}");
             }
         }
 
@@ -1102,7 +1102,7 @@ namespace WindowOperatorUI
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError($"无法检查管理员状态: {ex.Message}");
+                NotificationService.ShowError($"Failed to check administrator status: {ex.Message}");
                 return false;
             }
         }

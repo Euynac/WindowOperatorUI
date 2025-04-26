@@ -150,19 +150,35 @@
                             
                             <CheckBox Grid.Row="0" Grid.Column="0" x:Name="chkSilentMode" Content="Silent Mode" 
                                      Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8" 
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                <CheckBox.ToolTip>
+                                    <TextBlock Text="Disable notification sounds and minimize visual notifications" TextWrapping="Wrap" MaxWidth="250"/>
+                                </CheckBox.ToolTip>
+                            </CheckBox>
                             
                             <CheckBox Grid.Row="1" Grid.Column="0" x:Name="chkRunAtStartup" Content="Run at Startup" 
                                      Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                <CheckBox.ToolTip>
+                                    <TextBlock Text="Launch application automatically when Windows starts" TextWrapping="Wrap" MaxWidth="250"/>
+                                </CheckBox.ToolTip>
+                            </CheckBox>
                             
                             <CheckBox Grid.Row="2" Grid.Column="0" x:Name="chkRunAsAdmin" Content="Run as Administrator" 
                                      Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                <CheckBox.ToolTip>
+                                    <TextBlock Text="Run with elevated privileges to control applications that require administrator access" TextWrapping="Wrap" MaxWidth="250"/>
+                                </CheckBox.ToolTip>
+                            </CheckBox>
                             
                             <CheckBox Grid.Row="3" Grid.Column="0" x:Name="chkKeepOriginalSize" Content="Keep Original Window Size" 
                                      Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,0"
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                <CheckBox.ToolTip>
+                                    <TextBlock Text="Maintain the original size of windows when positioning them" TextWrapping="Wrap" MaxWidth="250"/>
+                                </CheckBox.ToolTip>
+                            </CheckBox>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -286,8 +302,8 @@
                                                    Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
                                         
                                         <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                            <Button x:Name="btnSelectWindow" Content="&#xEE57;" Click="BtnSelectWindow_Click" Tag="{Binding}"
-                                                    FontFamily="Segoe MDL2 Assets" Style="{StaticResource FluentButtonStyle}" 
+                                            <Button x:Name="btnSelectWindow" Content="+" Click="BtnSelectWindow_Click" Tag="{Binding}"
+                                                    Style="{StaticResource FluentButtonStyle}" 
                                                     Padding="8,4" Margin="0,0,5,0" ToolTip="Select Window"/>
                                             <Button x:Name="btnEditPath" Content="✏" Click="BtnEditPath_Click" Tag="{Binding}"
                                                     Style="{StaticResource FluentButtonStyle}" Padding="8,4" Margin="0,0,5,0" ToolTip="Edit Path"/>

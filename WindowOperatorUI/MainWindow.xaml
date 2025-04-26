@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WindowOperatorUI"
+        xmlns:converters="clr-namespace:WindowOperatorUI.Converters"
         xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         Title="Window Operator" Height="650" Width="900"
@@ -14,6 +15,9 @@
     
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        
+        <!-- Converter to show element when value is not null and hide when null -->
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         
         <Style x:Key="WindowButtonStyle" TargetType="Button">
             <Setter Property="Template">
@@ -366,17 +370,8 @@
                                                            Foreground="#AAFFFFFF" FontSize="12" Margin="0,0,0,10"/>
                                                 
                                                 <!-- Process Monitoring Info -->
-                                                <Grid Grid.Row="1" Margin="0,0,0,10" x:Name="processMonitoringGrid">
-                                                    <Grid.Style>
-                                                        <Style TargetType="Grid">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding ProcessDetails}" Value="{x:Null}">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Grid.Style>
-                                                    
+                                                <Grid Grid.Row="1" Margin="0,0,0,10" x:Name="processMonitoringGrid" 
+                                                      Visibility="{Binding ProcessDetails, Converter={StaticResource NullToVisibilityConverter}}">
                                                     <StackPanel>
                                                         <Grid Margin="0,5,0,0">
                                                             <Grid.ColumnDefinitions>

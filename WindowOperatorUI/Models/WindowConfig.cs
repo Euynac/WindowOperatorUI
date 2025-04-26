@@ -32,8 +32,19 @@ namespace WindowOperatorUI.Models
         public bool IsBound => BoundWindowHandle != IntPtr.Zero;
         
         // Real-time process monitoring information
+        private ProcessDetails _processDetails;
+        
         [System.Text.Json.Serialization.JsonIgnore]
-        public ProcessDetails ProcessDetails { get; set; }
+        public ProcessDetails ProcessDetails
+        {
+            get => _processDetails;
+            set 
+            {
+                _processDetails = value;
+                // We don't need to implement INotifyPropertyChanged on WindowConfig
+                // since ProcessDetails itself will notify of its own property changes
+            }
+        }
         
         // Creates a deep copy of the current configuration
         public WindowConfig Clone()

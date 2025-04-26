@@ -584,7 +584,8 @@ namespace WindowOperatorUI
             config.BoundWindowTitle = string.Empty;
             config.ProcessDetails = null;
             
-            lvWindowConfigs.Items.Refresh();
+            // 不再需要刷新整个ListView
+            // lvWindowConfigs.Items.Refresh();
         }
         
         private bool IsWindowHandleValid(IntPtr hwnd)
@@ -1457,7 +1458,7 @@ namespace WindowOperatorUI
             // Create and start the timer
             _processMonitoringTimer = new DispatcherTimer();
             _processMonitoringTimer.Tick += ProcessMonitoringTimer_Tick;
-            _processMonitoringTimer.Interval = TimeSpan.FromSeconds(2);
+            _processMonitoringTimer.Interval = TimeSpan.FromSeconds(1);
             _processMonitoringTimer.Start();
             
             // Update immediately
@@ -1482,8 +1483,8 @@ namespace WindowOperatorUI
             _processLastCheckTime.Clear();
             _processLastCpuTime.Clear();
             
-            // Update UI
-            lvWindowConfigs.Items.Refresh();
+            // 不再需要刷新整个列表，因为使用了INotifyPropertyChanged
+            // lvWindowConfigs.Items.Refresh();
         }
         
         private void ProcessMonitoringTimer_Tick(object sender, EventArgs e)
@@ -1549,8 +1550,11 @@ namespace WindowOperatorUI
                     // Calculate CPU usage
                     UpdateCpuUsage(process, details);
                     
-                    // Assign updated details back to the config
-                    config.ProcessDetails = details;
+                    // 只有在首次分配ProcessDetails时才需要指定给config
+                    if (config.ProcessDetails == null)
+                    {
+                        config.ProcessDetails = details;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -1558,8 +1562,8 @@ namespace WindowOperatorUI
                 }
             }
             
-            // Refresh the UI
-            lvWindowConfigs.Items.Refresh();
+            // 不再需要刷新整个ListView
+            // lvWindowConfigs.Items.Refresh();
         }
         
         private void UpdateCpuUsage(Process process, ProcessDetails details)

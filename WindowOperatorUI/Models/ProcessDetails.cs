@@ -1,23 +1,153 @@
 using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace WindowOperatorUI.Models
 {
-    public class ProcessDetails
+    public class ProcessDetails : INotifyPropertyChanged
     {
+        // 实现INotifyPropertyChanged接口
+        public event PropertyChangedEventHandler PropertyChanged;
+        
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+        
         // Identification
-        public int ProcessId { get; set; }
-        public string ProcessName { get; set; } = string.Empty;
-        public string WindowTitle { get; set; } = string.Empty;
+        private int _processId;
+        public int ProcessId 
+        { 
+            get => _processId; 
+            set
+            {
+                if (_processId != value)
+                {
+                    _processId = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        
+        private string _processName = string.Empty;
+        public string ProcessName 
+        { 
+            get => _processName; 
+            set
+            {
+                if (_processName != value)
+                {
+                    _processName = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        
+        private string _windowTitle = string.Empty;
+        public string WindowTitle 
+        { 
+            get => _windowTitle; 
+            set
+            {
+                if (_windowTitle != value)
+                {
+                    _windowTitle = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         
         // Window metrics
-        public int X { get; set; }
-        public int Y { get; set; } 
-        public int Width { get; set; }
-        public int Height { get; set; }
+        private int _x;
+        public int X 
+        { 
+            get => _x; 
+            set
+            {
+                if (_x != value)
+                {
+                    _x = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(FormattedPosition));
+                }
+            }
+        }
+        
+        private int _y;
+        public int Y 
+        { 
+            get => _y; 
+            set
+            {
+                if (_y != value)
+                {
+                    _y = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(FormattedPosition));
+                }
+            }
+        }
+        
+        private int _width;
+        public int Width 
+        { 
+            get => _width; 
+            set
+            {
+                if (_width != value)
+                {
+                    _width = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(FormattedSize));
+                }
+            }
+        }
+        
+        private int _height;
+        public int Height 
+        { 
+            get => _height; 
+            set
+            {
+                if (_height != value)
+                {
+                    _height = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(FormattedSize));
+                }
+            }
+        }
         
         // Performance metrics
-        public double CpuUsage { get; set; }
-        public long MemoryUsageBytes { get; set; }
+        private double _cpuUsage;
+        public double CpuUsage 
+        { 
+            get => _cpuUsage; 
+            set
+            {
+                if (Math.Abs(_cpuUsage - value) > 0.01)
+                {
+                    _cpuUsage = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(FormattedCpuUsage));
+                }
+            }
+        }
+        
+        private long _memoryUsageBytes;
+        public long MemoryUsageBytes 
+        { 
+            get => _memoryUsageBytes; 
+            set
+            {
+                if (_memoryUsageBytes != value)
+                {
+                    _memoryUsageBytes = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(FormattedMemoryUsage));
+                }
+            }
+        }
         
         // Formatted display properties
         public string FormattedMemoryUsage => FormatMemorySize(MemoryUsageBytes);

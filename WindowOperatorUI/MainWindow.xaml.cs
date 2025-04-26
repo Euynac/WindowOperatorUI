@@ -36,6 +36,8 @@ namespace WindowOperatorUI
         private Stack<WindowConfig> _deletedConfigs = new Stack<WindowConfig>(); // Stack for undo functionality
         private WindowConfig _draggedItem; // For drag-drop reordering
         private bool _isInitializing = true; // 添加标志以防止初始化触发事件
+        private Point _dragStartPoint;
+        private bool _isDragging = false;
 
         public MainWindow()
         {
@@ -736,56 +738,43 @@ namespace WindowOperatorUI
         
         private void ConfigItem_DragEnter(object sender, DragEventArgs e)
         {
-            // Clear all default drag/drop target effects
             e.Effects = DragDropEffects.None;
             e.Handled = true;
             
-            // Check if it's a configuration drag operation or file drop
-            bool isDraggingConfig = e.Data.GetDataPresent("WindowConfig");
-            bool isDraggingFile = e.Data.GetDataPresent(DataFormats.FileDrop);
-            
-            if (!isDraggingConfig && !isDraggingFile) return;
-            
-            // Set the appropriate effect
-            e.Effects = isDraggingConfig ? DragDropEffects.Move : DragDropEffects.Copy;
-            
-            // Apply visual feedback based on the sender type
-            if (sender is ListViewItem item)
+            // Check for valid drag data
+            if (e.Data.GetDataPresent("WindowConfig") || e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                item.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
-            }
-            else if (sender is Grid grid)
-            {
-                grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                e.Effects = e.Data.GetDataPresent("WindowConfig") ? DragDropEffects.Move : DragDropEffects.Copy;
+                
+                // Highlight drop target
+                if (sender is ListViewItem item)
+                {
+                    item.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                }
+                else if (sender is Grid grid)
+                {
+                    grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                }
             }
         }
         
         private void ConfigItem_DragOver(object sender, DragEventArgs e)
         {
-            // Clear all default drag/drop target effects
             e.Effects = DragDropEffects.None;
             e.Handled = true;
             
-            // Check if it's a configuration drag operation or file drop
-            bool isDraggingConfig = e.Data.GetDataPresent("WindowConfig");
-            bool isDraggingFile = e.Data.GetDataPresent(DataFormats.FileDrop);
-            
-            if (!isDraggingConfig && !isDraggingFile) return;
-            
-            // Set the appropriate effect
-            e.Effects = isDraggingConfig ? DragDropEffects.Move : DragDropEffects.Copy;
-            
-            // Apply visual feedback based on the sender type
-            if (sender is ListViewItem item)
+            // Check for valid drag data
+            if (e.Data.GetDataPresent("WindowConfig") || e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                if (item.Background is SolidColorBrush brush && brush.Color.A < 40)
+                e.Effects = e.Data.GetDataPresent("WindowConfig") ? DragDropEffects.Move : DragDropEffects.Copy;
+                
+                // Ensure target is highlighted
+                if (sender is ListViewItem item && (item.Background is not SolidColorBrush || 
+                                                   (item.Background is SolidColorBrush brush && brush.Color.A < 40)))
                 {
                     item.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
                 }
-            }
-            else if (sender is Grid grid)
-            {
-                if (grid.Background == Brushes.Transparent)
+                else if (sender is Grid grid && grid.Background == Brushes.Transparent)
                 {
                     grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
                 }
@@ -794,17 +783,14 @@ namespace WindowOperatorUI
         
         private void ConfigItem_DragLeave(object sender, DragEventArgs e)
         {
-            // Reset visual feedback when drag leaves the element
-            if (sender is FrameworkElement element)
+            // Reset visual feedback
+            if (sender is ListViewItem listViewItem)
             {
-                if (element is ListViewItem listViewItem)
-                {
-                    listViewItem.Background = new SolidColorBrush(Color.FromArgb(0x15, 0xFF, 0xFF, 0xFF));
-                }
-                else if (element is Grid grid)
-                {
-                    grid.Background = Brushes.Transparent;
-                }
+                listViewItem.Background = new SolidColorBrush(Color.FromArgb(0x15, 0xFF, 0xFF, 0xFF));
+            }
+            else if (sender is Grid grid)
+            {
+                grid.Background = Brushes.Transparent;
             }
             
             e.Handled = true;
@@ -815,159 +801,176 @@ namespace WindowOperatorUI
             try
             {
                 // Reset visual feedback
-                if (sender is FrameworkElement element)
+                if (sender is ListViewItem listViewItem)
                 {
-                    if (element is ListViewItem listViewItem)
-                    {
-                        listViewItem.Background = new SolidColorBrush(Color.FromArgb(0x15, 0xFF, 0xFF, 0xFF));
-                    }
-                    else if (element is Grid grid)
-                    {
-                        grid.Background = Brushes.Transparent;
-                    }
+                    listViewItem.Background = new SolidColorBrush(Color.FromArgb(0x15, 0xFF, 0xFF, 0xFF));
+                }
+                else if (sender is Grid grid)
+                {
+                    grid.Background = Brushes.Transparent;
                 }
                 
-                WindowConfig targetConfig = null;
-                
-                // Get target config from Tag or Content property
-                if (sender is FrameworkElement senderElement)
-                {
-                    targetConfig = senderElement.Tag as WindowConfig;
-                    
-                    // If it's a ListViewItem, try to get the config from the Content
-                    if (targetConfig == null && sender is ListViewItem item)
-                    {
-                        targetConfig = item.Content as WindowConfig;
-                    }
-                }
-                
-                if (targetConfig == null) return;
-                
-                // Check if it's a window configuration drag operation (reordering)
+                // Handle configuration reordering
                 if (e.Data.GetDataPresent("WindowConfig"))
                 {
-                    var draggedConfig = e.Data.GetData("WindowConfig") as WindowConfig;
-                    if (draggedConfig != null && !ReferenceEquals(draggedConfig, targetConfig))
+                    WindowConfig targetConfig = null;
+                    WindowConfig sourceConfig = e.Data.GetData("WindowConfig") as WindowConfig;
+                    
+                    // Get target config based on the drop target
+                    if (sender is FrameworkElement element)
                     {
-                        int draggedIndex = _windowConfigs.IndexOf(draggedConfig);
-                        int targetIndex = _windowConfigs.IndexOf(targetConfig);
+                        // Try to get from Tag first
+                        targetConfig = element.Tag as WindowConfig;
                         
-                        // Debug diagnostic message
-                        NotificationService.ShowInfo($"Moving: {draggedIndex} -> {targetIndex}", 1);
-                        
-                        if (draggedIndex >= 0 && targetIndex >= 0)
+                        // If Tag doesn't have the config, check if it's a ListViewItem with Content
+                        if (targetConfig == null && sender is ListViewItem item)
                         {
-                            // Ensure we have a valid drag operation
-                            if (draggedIndex != targetIndex)
+                            targetConfig = item.Content as WindowConfig;
+                        }
+                    }
+                    
+                    // Make sure we have valid configs and they're different
+                    if (sourceConfig != null && targetConfig != null && !ReferenceEquals(sourceConfig, targetConfig))
+                    {
+                        int sourceIndex = -1;
+                        int targetIndex = -1;
+                        
+                        // Find the exact indices
+                        for (int i = 0; i < _windowConfigs.Count; i++)
+                        {
+                            if (ReferenceEquals(_windowConfigs[i], sourceConfig))
+                                sourceIndex = i;
+                            else if (ReferenceEquals(_windowConfigs[i], targetConfig))
+                                targetIndex = i;
+                            
+                            if (sourceIndex >= 0 && targetIndex >= 0)
+                                break;
+                        }
+                        
+                        // Log the indices for debugging
+                        NotificationService.ShowInfo($"Moving config: {sourceIndex} → {targetIndex}", 1);
+                        
+                        if (sourceIndex >= 0 && targetIndex >= 0 && sourceIndex != targetIndex)
+                        {
+                            // Create a new snapshot of the collection to avoid modification issues
+                            var configsList = _windowConfigs.ToList();
+                            
+                            // Remove source and insert at target position
+                            configsList.RemoveAt(sourceIndex);
+                            configsList.Insert(targetIndex, sourceConfig);
+                            
+                            // Clear and rebuild the observable collection
+                            _windowConfigs.Clear();
+                            foreach (var config in configsList)
                             {
-                                // Take a snapshot of both indices before any modifications
-                                int originalDraggedIndex = draggedIndex;
-                                int originalTargetIndex = targetIndex;
-                                
-                                // Remove first, which changes indexing
-                                _windowConfigs.RemoveAt(draggedIndex);
-                                
-                                // Target index needs adjustment if it was after the dragged item
-                                if (originalTargetIndex > originalDraggedIndex)
-                                {
-                                    targetIndex = originalTargetIndex - 1;
-                                }
-                                else
-                                {
-                                    targetIndex = originalTargetIndex;
-                                }
-                                
-                                // Insert at the target position
-                                _windowConfigs.Insert(targetIndex, draggedConfig);
-                                
-                                // Update all configuration order numbers
-                                UpdateConfigurationOrder();
-                                
-                                // Refresh the ListView to update the UI
-                                lvWindowConfigs.Items.Refresh();
-                                
-                                // Select the moved item
-                                lvWindowConfigs.SelectedItem = draggedConfig;
+                                _windowConfigs.Add(config);
                             }
+                            
+                            // Update order numbers
+                            UpdateConfigurationOrder();
+                            
+                            // Refresh UI and select the moved item
+                            lvWindowConfigs.Items.Refresh();
+                            lvWindowConfigs.SelectedItem = sourceConfig;
                         }
                     }
                 }
-                // Check if it's a file drop operation
+                // Handle file drop operation
                 else if (e.Data.GetDataPresent(DataFormats.FileDrop))
                 {
-                    // Get the dropped files
                     string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                     
-                    // If multiple files were dropped, just use the first one
-                    if (files is { Length: > 0 })
+                    if (files?.Length > 0)
                     {
                         var filePath = StripQuotesFromPath(files[0]);
+                        WindowConfig targetConfig = null;
                         
-                        // Update the path in the configuration
-                        targetConfig.ExePath = filePath;
+                        // Find the target config
+                        if (sender is FrameworkElement element)
+                        {
+                            targetConfig = element.Tag as WindowConfig;
+                            
+                            if (targetConfig == null && sender is ListViewItem item)
+                            {
+                                targetConfig = item.Content as WindowConfig;
+                            }
+                        }
                         
-                        // Refresh the ListView to show the updated path
-                        lvWindowConfigs.Items.Refresh();
-                        
-                        // Show a success notification
-                        NotificationService.ShowSuccess($"Path updated to: {Path.GetFileName(filePath)}");
+                        if (targetConfig != null)
+                        {
+                            // Update the path in the configuration
+                            targetConfig.ExePath = filePath;
+                            lvWindowConfigs.Items.Refresh();
+                            NotificationService.ShowSuccess($"Path updated to: {Path.GetFileName(filePath)}");
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError($"Error during drop operation: {ex.Message}");
+                NotificationService.ShowError($"Drop error: {ex.Message}");
             }
             
+            _isDragging = false;
             e.Handled = true;
         }
         
-        // New method to handle dragging of config items
         private void ConfigItem_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Skip if the click target is a text box, button, or checkbox
-            if (e.OriginalSource is TextBox || 
-                FindVisualParent<TextBox>(e.OriginalSource as DependencyObject) != null ||
-                e.OriginalSource is Button || 
-                FindVisualParent<Button>(e.OriginalSource as DependencyObject) != null ||
-                e.OriginalSource is CheckBox || 
-                FindVisualParent<CheckBox>(e.OriginalSource as DependencyObject) != null)
+            // Ignore clicks on interactive controls
+            if (e.OriginalSource is TextBox || FindVisualParent<TextBox>(e.OriginalSource as DependencyObject) != null ||
+                e.OriginalSource is Button || FindVisualParent<Button>(e.OriginalSource as DependencyObject) != null ||
+                e.OriginalSource is CheckBox || FindVisualParent<CheckBox>(e.OriginalSource as DependencyObject) != null)
             {
                 return;
             }
-
-            // Get the window config from the Tag property
-            WindowConfig config = null;
+            
+            // Get the ListViewItem and config
             ListViewItem listViewItem = null;
+            WindowConfig config = null;
             
             if (sender is ListViewItem item)
             {
                 listViewItem = item;
                 config = item.Content as WindowConfig;
             }
-            else if (sender is FrameworkElement element)
+            else
             {
-                config = element.Tag as WindowConfig;
-                listViewItem = FindVisualParent<ListViewItem>(element);
+                // Find the parent ListViewItem if the click was on a child element
+                listViewItem = FindVisualParent<ListViewItem>(sender as DependencyObject);
+                if (listViewItem != null)
+                {
+                    config = listViewItem.Content as WindowConfig;
+                }
+                else if (sender is FrameworkElement element)
+                {
+                    config = element.Tag as WindowConfig;
+                }
             }
             
+            // Select the item and start drag operation
             if (config != null)
             {
-                // Select the item in UI
+                // Select in the list view
                 if (listViewItem != null)
                 {
                     listViewItem.IsSelected = true;
                 }
-                
-                // Store the dragged item and select it in the list view
-                _draggedItem = config;
                 lvWindowConfigs.SelectedItem = config;
                 
-                // Start the drag operation
-                var dragData = new DataObject("WindowConfig", config);
-                DragDrop.DoDragDrop(sender as DependencyObject, dragData, DragDropEffects.Move);
+                // Start drag-drop operation
+                _draggedItem = config;
+                _isDragging = true;
                 
-                // Force refresh the ListView to ensure hover states are properly updated
+                // Create the drag data with a unique format name for our app
+                DataObject dragData = new DataObject();
+                dragData.SetData("WindowConfig", config);
+                
+                // Start drag-drop and handle the result
+                DragDropEffects result = DragDrop.DoDragDrop(sender as DependencyObject, dragData, DragDropEffects.Move);
+                
+                // Reset drag state
+                _isDragging = false;
                 lvWindowConfigs.Items.Refresh();
             }
         }

@@ -8,6 +8,7 @@ using WindowOperatorUI.Models;
 using WindowOperatorUI.Services;
 using WindowOperatorUI.Utils;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace WindowOperatorUI
 {
@@ -163,8 +164,15 @@ namespace WindowOperatorUI
                 // Create window manager
                 var windowManager = new WindowManager(logger);
 
-                // Process each window configuration
-                foreach (var windowConfig in config.Windows)
+                // 按照Order属性排序窗口配置，Order小的先启动（将在底层），Order大的后启动（将在上层）
+                var sortedConfigs = config.Windows
+                    .OrderBy(w => w.Order ?? 0)
+                    .ToList();
+                
+                logger.Log($"[INFO] Processing {sortedConfigs.Count} window configurations in order");
+
+                // 依次启动每个窗口配置
+                foreach (var windowConfig in sortedConfigs)
                 {
                     if (string.IsNullOrEmpty(windowConfig.ExePath) || !File.Exists(windowConfig.ExePath))
                     {
@@ -174,13 +182,16 @@ namespace WindowOperatorUI
 
                     try
                     {
-                        // 使用Task.Run创建一个独立任务来启动和配置窗口
-                        // 这样每个窗口的处理都是独立的，不会互相阻塞
-                        Task.Run(() => LaunchAndConfigureWindow(windowConfig, windowManager, logger)).Wait();
+                        logger.Log($"[INFO] Launching app with Order={windowConfig.Order}: {windowConfig.ExePath}");
+                        // 串行处理窗口启动，确保按顺序处理Z轴
+                        LaunchAndConfigureWindow(windowConfig, windowManager, logger);
+                        
+                        // 添加延迟，确保窗口显示和Z轴顺序正确建立
+                        Thread.Sleep(500);
                     }
                     catch (Exception ex)
                     {
-                        logger.Log($"[ERROR] {ex.Message}", true);
+                        logger.Log($"[ERROR] Failed to launch {windowConfig.ExePath}: {ex.Message}", true);
                     }
                 }
             }

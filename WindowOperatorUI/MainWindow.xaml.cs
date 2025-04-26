@@ -316,9 +316,17 @@ namespace WindowOperatorUI
                 return;
             }
 
-            foreach (var config in selectedConfigs)
+            // 按照Order属性排序配置，确保Order小的先启动（在底层），Order大的后启动（在上层）
+            var sortedConfigs = selectedConfigs
+                .OrderBy(config => config.Order ?? 0)
+                .ToList();
+
+            foreach (var config in sortedConfigs)
             {
                 RunConfiguration(config);
+                
+                // 添加延迟，确保窗口Z轴顺序正确建立
+                Thread.Sleep(300);
             }
         }
 
@@ -545,6 +553,20 @@ namespace WindowOperatorUI
                     else if (config.EnableAlwaysOnTop)
                     {
                         NativeMethods.SetWindowPos(hwnd, NativeMethods.HWND_TOP, 0, 0, 0, 0, flags);
+                    }
+                    
+                    // 处理Order值对Z轴顺序的影响
+                    if (config.Order is > 0 && (config.EnableAlwaysOnTopMost || config.EnableAlwaysOnTop))
+                    {
+                        var insertAfter = config.EnableAlwaysOnTopMost ? NativeMethods.HWND_TOPMOST : NativeMethods.HWND_TOP;
+                        
+                        // Order值代表提升Z顺序的次数，每次提升都会将窗口移到同组窗口的顶部
+                        // 为了使顺序更明显，我们使用Order值的2倍作为提升次数
+                        for (int i = 0; i < config.Order.Value * 2; i++)
+                        {
+                            NativeMethods.SetWindowPos(hwnd, insertAfter, 0, 0, 0, 0, flags);
+                            Thread.Sleep(10); // 短暂延迟，确保窗口系统能正确处理
+                        }
                     }
                     
                     NotificationService.ShowSuccess($"Updated Z-order for window: {config.BoundWindowTitle}");

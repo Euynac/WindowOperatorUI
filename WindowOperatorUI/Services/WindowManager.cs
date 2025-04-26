@@ -230,8 +230,23 @@ namespace WindowOperatorUI.Services
             if (config.Order is > 0)
             {
                 _logger.Log($"[INFO] Set window '{windowTitle}' Z-order to {config.Order.Value}");
-                // Note: Windows doesn't support exact Z-order numbers, but this could be extended
-                // in the future to track window handles and order them relatively
+                
+                // 如果存在多个TopMost或Top窗口，我们要确保Order大的窗口在上层
+                // 这里我们使用循环提升Z顺序，Order值越大，提升次数越多
+                if (config.EnableAlwaysOnTopMost || config.EnableAlwaysOnTop)
+                {
+                    var insertAfter = config.EnableAlwaysOnTopMost ? NativeMethods.HWND_TOPMOST : NativeMethods.HWND_TOP;
+                    
+                    // Order值代表提升Z顺序的次数，每次提升都会将窗口移到同组窗口的顶部
+                    // 为了使顺序更明显，我们使用Order值的2倍作为提升次数
+                    for (int i = 0; i < config.Order.Value * 2; i++)
+                    {
+                        NativeMethods.SetWindowPos(hwnd, insertAfter, 0, 0, 0, 0, flags);
+                        Thread.Sleep(10); // 短暂延迟，确保窗口系统能正确处理
+                    }
+                    
+                    _logger.Log($"[INFO] Enhanced Z-order for window '{windowTitle}' with Order={config.Order.Value}");
+                }
             }
         }
 

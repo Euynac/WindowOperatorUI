@@ -737,30 +737,24 @@ namespace WindowOperatorUI
         
         private void ConfigItem_DragEnter(object sender, DragEventArgs e)
         {
-            // 清除所有默认的拖放目标效果
+            // Clear all default drag/drop target effects
             e.Effects = DragDropEffects.None;
             e.Handled = true;
             
-            // 检查是否是内部配置项拖拽
-            if (e.Data.GetDataPresent("WindowConfig"))
+            // Apply visual feedback based on the sender type
+            if (sender is ListViewItem item)
             {
-                e.Effects = DragDropEffects.Move;
-                
-                // 视觉反馈 - 背景高亮
-                if (sender is Grid grid)
+                if (e.Data.GetDataPresent("WindowConfig") || e.Data.GetDataPresent(DataFormats.FileDrop))
                 {
-                    grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                    e.Effects = e.Data.GetDataPresent("WindowConfig") ? DragDropEffects.Move : DragDropEffects.Copy;
+                    item.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
                 }
             }
-            // 对文件拖放提供特殊处理
-            else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            else if (sender is Grid grid)
             {
-                // 必须设置为Copy才能显示正确的拖放图标
-                e.Effects = DragDropEffects.Copy;
-                
-                // 视觉反馈 - 背景高亮
-                if (sender is Grid grid)
+                if (e.Data.GetDataPresent("WindowConfig") || e.Data.GetDataPresent(DataFormats.FileDrop))
                 {
+                    e.Effects = e.Data.GetDataPresent("WindowConfig") ? DragDropEffects.Move : DragDropEffects.Copy;
                     grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
                 }
             }
@@ -768,39 +762,45 @@ namespace WindowOperatorUI
         
         private void ConfigItem_DragOver(object sender, DragEventArgs e)
         {
-            // 清除所有默认的拖放目标效果
+            // Clear all default drag/drop target effects
             e.Effects = DragDropEffects.None;
             e.Handled = true;
             
-            // 检查是否是内部配置项拖拽
-            if (e.Data.GetDataPresent("WindowConfig"))
+            // Apply visual feedback based on the sender type
+            if (sender is ListViewItem item)
             {
-                e.Effects = DragDropEffects.Move;
-                
-                // 视觉反馈 - 保持高亮状态
-                if (sender is Grid grid && grid.Background == Brushes.Transparent)
+                if (e.Data.GetDataPresent("WindowConfig") || e.Data.GetDataPresent(DataFormats.FileDrop))
                 {
-                    grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                    e.Effects = e.Data.GetDataPresent("WindowConfig") ? DragDropEffects.Move : DragDropEffects.Copy;
+                    
+                    if (item.Background.Opacity < 0.1)
+                    {
+                        item.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                    }
                 }
             }
-            // 对文件拖放提供特殊处理
-            else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            else if (sender is Grid grid)
             {
-                // 必须设置为Copy才能显示正确的拖放图标
-                e.Effects = DragDropEffects.Copy;
-                
-                // 视觉反馈 - 保持高亮状态
-                if (sender is Grid grid && grid.Background == Brushes.Transparent)
+                if (e.Data.GetDataPresent("WindowConfig") || e.Data.GetDataPresent(DataFormats.FileDrop))
                 {
-                    grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                    e.Effects = e.Data.GetDataPresent("WindowConfig") ? DragDropEffects.Move : DragDropEffects.Copy;
+                    
+                    if (grid.Background == Brushes.Transparent)
+                    {
+                        grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
+                    }
                 }
             }
         }
         
         private void ConfigItem_DragLeave(object sender, DragEventArgs e)
         {
-            // 重置视觉反馈
-            if (sender is Grid grid)
+            // Reset visual feedback
+            if (sender is ListViewItem item)
+            {
+                item.Background = new SolidColorBrush(Color.FromArgb(0x15, 0xFF, 0xFF, 0xFF));
+            }
+            else if (sender is Grid grid)
             {
                 grid.Background = Brushes.Transparent;
             }
@@ -812,23 +812,36 @@ namespace WindowOperatorUI
         {
             try
             {
-                // 重置视觉反馈
-                if (sender is Grid grid)
+                // Reset visual feedback
+                if (sender is FrameworkElement element)
                 {
-                    grid.Background = Brushes.Transparent;
+                    if (element is ListViewItem listViewItem)
+                    {
+                        listViewItem.Background = new SolidColorBrush(Color.FromArgb(0x15, 0xFF, 0xFF, 0xFF));
+                    }
+                    else if (element is Grid grid)
+                    {
+                        grid.Background = Brushes.Transparent;
+                    }
                 }
                 
                 WindowConfig targetConfig = null;
                 
-                // 从Tag或其他方式获取WindowConfig
-                if (sender is FrameworkElement element)
+                // From Tag or Content property
+                if (sender is FrameworkElement senderElement)
                 {
-                    targetConfig = element.Tag as WindowConfig;
+                    targetConfig = senderElement.Tag as WindowConfig;
+                    
+                    // If it's a ListViewItem, try to get the config from the Content
+                    if (targetConfig == null && sender is ListViewItem item)
+                    {
+                        targetConfig = item.Content as WindowConfig;
+                    }
                 }
                 
                 if (targetConfig == null) return;
                 
-                // 检查是否是内部配置项拖拽（重新排序）
+                // Check if the dragging operation is within the window configuration list
                 if (e.Data.GetDataPresent("WindowConfig"))
                 {
                     var draggedConfig = e.Data.GetData("WindowConfig") as WindowConfig;
@@ -841,7 +854,7 @@ namespace WindowOperatorUI
                         {
                             _windowConfigs.RemoveAt(draggedIndex);
                             
-                            // 如果目标索引大于拖动索引，需要减1（因为已经删除了一个元素）
+                            // If the target index is greater than the dragged index, we need to subtract 1
                             if (targetIndex > draggedIndex)
                             {
                                 targetIndex--;
@@ -849,30 +862,30 @@ namespace WindowOperatorUI
                             
                             _windowConfigs.Insert(targetIndex, draggedConfig);
                             
-                            // 更新所有配置的顺序
+                            // Update the order of all configurations
                             UpdateConfigurationOrder();
                             lvWindowConfigs.Items.Refresh();
                         }
                     }
                 }
-                // 检查是否是文件拖放
+                // Check if it's a file drop operation
                 else if (e.Data.GetDataPresent(DataFormats.FileDrop))
                 {
-                    // 获取拖放的文件
+                    // Get the dropped files
                     string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                     
-                    // 如果有多个文件被拖放，取第一个
+                    // If there are multiple files, just take the first one
                     if (files is { Length: > 0 })
                     {
                         var filePath = StripQuotesFromPath(files[0]);
                         
-                        // 更新配置中的路径
+                        // Update the path in the configuration
                         targetConfig.ExePath = filePath;
                         
-                        // 刷新ListView显示更新后的路径
+                        // Refresh the ListView to show the updated path
                         lvWindowConfigs.Items.Refresh();
                         
-                        // 显示成功通知
+                        // Show a success notification
                         NotificationService.ShowSuccess($"Path updated to: {Path.GetFileName(filePath)}");
                     }
                 }
@@ -888,14 +901,54 @@ namespace WindowOperatorUI
         // New method to handle dragging of config items
         private void ConfigItem_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is Grid { Tag: WindowConfig config } grid)
+            // Skip if the click target is a text box, button, or checkbox
+            if (e.OriginalSource is TextBox || 
+                FindVisualParent<TextBox>(e.OriginalSource as DependencyObject) != null ||
+                e.OriginalSource is Button || 
+                FindVisualParent<Button>(e.OriginalSource as DependencyObject) != null ||
+                e.OriginalSource is CheckBox || 
+                FindVisualParent<CheckBox>(e.OriginalSource as DependencyObject) != null)
+            {
+                return;
+            }
+
+            // Get the window config from the Tag property
+            WindowConfig config = null;
+            
+            if (sender is FrameworkElement element)
+            {
+                config = element.Tag as WindowConfig;
+            }
+            
+            if (config == null && sender is ListViewItem listViewItem)
+            {
+                config = listViewItem.Content as WindowConfig;
+            }
+            
+            if (config != null)
             {
                 _draggedItem = config;
                 
                 // Set up the drag & drop operation
                 var dragData = new DataObject("WindowConfig", config);
-                DragDrop.DoDragDrop(grid, dragData, DragDropEffects.Move);
+                DragDrop.DoDragDrop(sender as DependencyObject, dragData, DragDropEffects.Move);
             }
+        }
+        
+        private T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            if (child == null) return null;
+            
+            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+            
+            if (parentObject == null) return null;
+            
+            if (parentObject is T parent)
+            {
+                return parent;
+            }
+            
+            return FindVisualParent<T>(parentObject);
         }
         
         #endregion

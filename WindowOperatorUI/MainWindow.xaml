@@ -41,14 +41,12 @@
 
         <Style x:Key="NumberTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}">
             <Setter Property="Width" Value="60"/>
-            <Setter Property="Height" Value="24"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Margin" Value="0,0,8,0"/>
             <Setter Property="TextAlignment" Value="Right"/>
         </Style>
 
         <Style x:Key="PathTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}">
-            <Setter Property="Height" Value="24"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Margin" Value="0,0,8,0"/>
         </Style>
@@ -189,7 +187,9 @@
                     <ListView Grid.Row="1" x:Name="lvWindowConfigs" 
                               Style="{StaticResource FluentListViewStyle}"
                               ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
-                              SelectionChanged="LvWindowConfigs_SelectionChanged">
+                              SelectionChanged="LvWindowConfigs_SelectionChanged"
+                              Margin="0,0,0,0"
+                              Padding="0,2,0,2">
                         <ListView.Template>
                             <ControlTemplate TargetType="ListView">
                                 <ScrollViewer Style="{StaticResource FluentScrollViewerStyle}">
@@ -201,16 +201,23 @@
                             <Style TargetType="ListViewItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                                 <Setter Property="Background" Value="#15FFFFFF"/>
-                                <Setter Property="Margin" Value="0,0,0,8"/>
-                                <Setter Property="Padding" Value="15"/>
+                                <Setter Property="Margin" Value="0,0,0,10"/>
+                                <Setter Property="Padding" Value="16"/>
                                 <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="AllowDrop" Value="True"/>
+                                <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ConfigItem_MouseLeftButtonDown"/>
+                                <EventSetter Event="Drop" Handler="ConfigItem_Drop"/>
+                                <EventSetter Event="DragEnter" Handler="ConfigItem_DragEnter"/>
+                                <EventSetter Event="DragLeave" Handler="ConfigItem_DragLeave"/>
+                                <EventSetter Event="DragOver" Handler="ConfigItem_DragOver"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="ListViewItem">
                                             <Border Background="{TemplateBinding Background}" 
                                                     BorderBrush="{TemplateBinding BorderBrush}" 
                                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="8">
+                                                    CornerRadius="8"
+                                                    Tag="{Binding}">
                                                 <Grid>
                                                     <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
                                                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
@@ -234,14 +241,8 @@
                         </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid AllowDrop="True" 
-                                      DragEnter="ConfigItem_DragEnter" 
-                                      DragLeave="ConfigItem_DragLeave" 
-                                      DragOver="ConfigItem_DragOver"
-                                      Background="Transparent" 
-                                      Drop="ConfigItem_Drop"
-                                      Tag="{Binding}"
-                                      MouseLeftButtonDown="ConfigItem_MouseLeftButtonDown">
+                                <Grid Background="Transparent" 
+                                      Tag="{Binding}">
                                     <Grid.ContextMenu>
                                         <ContextMenu Style="{StaticResource FluentContextMenuStyle}">
                                             <MenuItem Header="Restore to Last Saved Settings" Click="MenuRestoreConfig_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
@@ -336,9 +337,9 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         
-                                        <TextBlock Text="Edit Executable Path:" Foreground="#FFFFFF" Margin="0,0,0,8"/>
+                                        <TextBlock Text="Edit Executable Path:" Foreground="#FFFFFF" Margin="0,0,0,10"/>
                                         
-                                        <Grid Grid.Row="1">
+                                        <Grid Grid.Row="1" Margin="0,0,0,5">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
@@ -347,13 +348,15 @@
                                             <TextBox x:Name="txtExePath" Grid.Column="0" Text="{Binding ExePath}" 
                                                     Style="{StaticResource PathTextBoxStyle}"
                                                     TextChanged="TxtExePath_TextChanged"
-                                                    Tag="{Binding}"/>
+                                                    Tag="{Binding}"
+                                                    Padding="10,4"/>
                                             
                                             <Button Grid.Column="1" Content="Browse..." 
                                                     Click="BtnBrowseExePath_Click" 
                                                     Tag="{Binding}" 
                                                     Style="{StaticResource FluentAccentButtonStyle}"
-                                                    Padding="10,4"/>
+                                                    Padding="12,4"
+                                                    Margin="8,0,0,0"/>
                                         </Grid>
                                     </Grid>
                                     
@@ -366,23 +369,23 @@
                                         </Grid.ColumnDefinitions>
                                         
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,15,0">
-                                            <TextBlock Text="X:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                            <TextBox Text="{Binding X}" Style="{StaticResource NumberTextBoxStyle}"/>
+                                            <TextBlock Text="X:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBox Text="{Binding X}" Style="{StaticResource NumberTextBoxStyle}" />
                                         </StackPanel>
                                         
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,15,0">
-                                            <TextBlock Text="Y:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                            <TextBox Text="{Binding Y}" Style="{StaticResource NumberTextBoxStyle}"/>
+                                            <TextBlock Text="Y:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBox Text="{Binding Y}" Style="{StaticResource NumberTextBoxStyle}" />
                                         </StackPanel>
                                         
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,15,0">
-                                            <TextBlock Text="Width:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                            <TextBox Text="{Binding Width, TargetNullValue=''}" Style="{StaticResource NumberTextBoxStyle}"/>
+                                            <TextBlock Text="Width:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBox Text="{Binding Width, TargetNullValue=''}" Style="{StaticResource NumberTextBoxStyle}" />
                                         </StackPanel>
                                         
                                         <StackPanel Grid.Column="3" Orientation="Horizontal">
-                                            <TextBlock Text="Height:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                            <TextBox Text="{Binding Height, TargetNullValue=''}" Style="{StaticResource NumberTextBoxStyle}"/>
+                                            <TextBlock Text="Height:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBox Text="{Binding Height, TargetNullValue=''}" Style="{StaticResource NumberTextBoxStyle}" />
                                         </StackPanel>
                                     </Grid>
                                     

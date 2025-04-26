@@ -205,6 +205,8 @@
                                 <Setter Property="Padding" Value="16"/>
                                 <Setter Property="BorderThickness" Value="0"/>
                                 <Setter Property="AllowDrop" Value="True"/>
+                                <Setter Property="IsTabStop" Value="True"/>
+                                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                                 <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ConfigItem_MouseLeftButtonDown"/>
                                 <EventSetter Event="Drop" Handler="ConfigItem_Drop"/>
                                 <EventSetter Event="DragEnter" Handler="ConfigItem_DragEnter"/>
@@ -213,7 +215,8 @@
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="ListViewItem">
-                                            <Border Background="{TemplateBinding Background}" 
+                                            <Border x:Name="ItemBorder"
+                                                    Background="{TemplateBinding Background}" 
                                                     BorderBrush="{TemplateBinding BorderBrush}" 
                                                     BorderThickness="{TemplateBinding BorderThickness}"
                                                     CornerRadius="8"
@@ -233,6 +236,13 @@
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Background" Value="#20FFFFFF"/>
                                                 </Trigger>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsSelected" Value="True"/>
+                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter Property="Background" Value="#30FFFFFF"/>
+                                                </MultiTrigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Setter.Value>

@@ -171,14 +171,15 @@
                     <ControlTemplate TargetType="ScrollBar">
                         <Grid>
                             <Track x:Name="PART_Track" 
-                                   IsDirectionReversed="False">
+                                   IsDirectionReversed="True">
                                 <Track.DecreaseRepeatButton>
                                     <RepeatButton Command="ScrollBar.LineUpCommand" 
                                                  Background="Transparent" 
                                                  Opacity="0"/>
                                 </Track.DecreaseRepeatButton>
                                 <Track.Thumb>
-                                    <Thumb Style="{StaticResource FluentScrollBarThumbStyle}"/>
+                                    <Thumb Style="{StaticResource FluentScrollBarThumbStyle}"
+                                           Cursor="Hand"/>
                                 </Track.Thumb>
                                 <Track.IncreaseRepeatButton>
                                     <RepeatButton Command="ScrollBar.LineDownCommand" 

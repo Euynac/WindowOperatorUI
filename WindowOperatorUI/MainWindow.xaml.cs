@@ -121,10 +121,9 @@ namespace WindowOperatorUI
 
         private void UpdateConfigurationOrder()
         {
-            var orderIndex = 1;
-            foreach (var config in _windowConfigs)
+            for (int i = 0; i < _windowConfigs.Count; i++)
             {
-                config.Order = orderIndex++;
+                _windowConfigs[i].Order = i + 1;
             }
         }
 
@@ -741,22 +740,23 @@ namespace WindowOperatorUI
             e.Effects = DragDropEffects.None;
             e.Handled = true;
             
+            // Check if it's a configuration drag operation or file drop
+            bool isDraggingConfig = e.Data.GetDataPresent("WindowConfig");
+            bool isDraggingFile = e.Data.GetDataPresent(DataFormats.FileDrop);
+            
+            if (!isDraggingConfig && !isDraggingFile) return;
+            
+            // Set the appropriate effect
+            e.Effects = isDraggingConfig ? DragDropEffects.Move : DragDropEffects.Copy;
+            
             // Apply visual feedback based on the sender type
             if (sender is ListViewItem item)
             {
-                if (e.Data.GetDataPresent("WindowConfig") || e.Data.GetDataPresent(DataFormats.FileDrop))
-                {
-                    e.Effects = e.Data.GetDataPresent("WindowConfig") ? DragDropEffects.Move : DragDropEffects.Copy;
-                    item.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
-                }
+                item.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
             }
             else if (sender is Grid grid)
             {
-                if (e.Data.GetDataPresent("WindowConfig") || e.Data.GetDataPresent(DataFormats.FileDrop))
-                {
-                    e.Effects = e.Data.GetDataPresent("WindowConfig") ? DragDropEffects.Move : DragDropEffects.Copy;
-                    grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
-                }
+                grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
             }
         }
         
@@ -766,43 +766,45 @@ namespace WindowOperatorUI
             e.Effects = DragDropEffects.None;
             e.Handled = true;
             
+            // Check if it's a configuration drag operation or file drop
+            bool isDraggingConfig = e.Data.GetDataPresent("WindowConfig");
+            bool isDraggingFile = e.Data.GetDataPresent(DataFormats.FileDrop);
+            
+            if (!isDraggingConfig && !isDraggingFile) return;
+            
+            // Set the appropriate effect
+            e.Effects = isDraggingConfig ? DragDropEffects.Move : DragDropEffects.Copy;
+            
             // Apply visual feedback based on the sender type
             if (sender is ListViewItem item)
             {
-                if (e.Data.GetDataPresent("WindowConfig") || e.Data.GetDataPresent(DataFormats.FileDrop))
+                if (item.Background is SolidColorBrush brush && brush.Color.A < 40)
                 {
-                    e.Effects = e.Data.GetDataPresent("WindowConfig") ? DragDropEffects.Move : DragDropEffects.Copy;
-                    
-                    if (item.Background.Opacity < 0.1)
-                    {
-                        item.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
-                    }
+                    item.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
                 }
             }
             else if (sender is Grid grid)
             {
-                if (e.Data.GetDataPresent("WindowConfig") || e.Data.GetDataPresent(DataFormats.FileDrop))
+                if (grid.Background == Brushes.Transparent)
                 {
-                    e.Effects = e.Data.GetDataPresent("WindowConfig") ? DragDropEffects.Move : DragDropEffects.Copy;
-                    
-                    if (grid.Background == Brushes.Transparent)
-                    {
-                        grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
-                    }
+                    grid.Background = new SolidColorBrush(Color.FromArgb(40, 100, 180, 255));
                 }
             }
         }
         
         private void ConfigItem_DragLeave(object sender, DragEventArgs e)
         {
-            // Reset visual feedback
-            if (sender is ListViewItem item)
+            // Reset visual feedback when drag leaves the element
+            if (sender is FrameworkElement element)
             {
-                item.Background = new SolidColorBrush(Color.FromArgb(0x15, 0xFF, 0xFF, 0xFF));
-            }
-            else if (sender is Grid grid)
-            {
-                grid.Background = Brushes.Transparent;
+                if (element is ListViewItem listViewItem)
+                {
+                    listViewItem.Background = new SolidColorBrush(Color.FromArgb(0x15, 0xFF, 0xFF, 0xFF));
+                }
+                else if (element is Grid grid)
+                {
+                    grid.Background = Brushes.Transparent;
+                }
             }
             
             e.Handled = true;
@@ -827,7 +829,7 @@ namespace WindowOperatorUI
                 
                 WindowConfig targetConfig = null;
                 
-                // From Tag or Content property
+                // Get target config from Tag or Content property
                 if (sender is FrameworkElement senderElement)
                 {
                     targetConfig = senderElement.Tag as WindowConfig;
@@ -841,7 +843,7 @@ namespace WindowOperatorUI
                 
                 if (targetConfig == null) return;
                 
-                // Check if the dragging operation is within the window configuration list
+                // Check if it's a window configuration drag operation (reordering)
                 if (e.Data.GetDataPresent("WindowConfig"))
                 {
                     var draggedConfig = e.Data.GetData("WindowConfig") as WindowConfig;
@@ -852,19 +854,27 @@ namespace WindowOperatorUI
                         
                         if (draggedIndex >= 0 && targetIndex >= 0)
                         {
+                            // Fix for issue #2: Properly handle reordering
+                            // Remove from the old position and insert at the new position
                             _windowConfigs.RemoveAt(draggedIndex);
                             
-                            // If the target index is greater than the dragged index, we need to subtract 1
+                            // If the target was after the dragged item, its index decreased by 1
                             if (targetIndex > draggedIndex)
                             {
                                 targetIndex--;
                             }
                             
+                            // Insert at the target position
                             _windowConfigs.Insert(targetIndex, draggedConfig);
                             
-                            // Update the order of all configurations
+                            // Update all configuration order numbers
                             UpdateConfigurationOrder();
+                            
+                            // Refresh the ListView to update the UI
                             lvWindowConfigs.Items.Refresh();
+                            
+                            // Select the moved item
+                            lvWindowConfigs.SelectedItem = draggedConfig;
                         }
                     }
                 }
@@ -874,7 +884,7 @@ namespace WindowOperatorUI
                     // Get the dropped files
                     string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                     
-                    // If there are multiple files, just take the first one
+                    // If multiple files were dropped, just use the first one
                     if (files is { Length: > 0 })
                     {
                         var filePath = StripQuotesFromPath(files[0]);
@@ -923,15 +933,23 @@ namespace WindowOperatorUI
             if (config == null && sender is ListViewItem listViewItem)
             {
                 config = listViewItem.Content as WindowConfig;
+                
+                // Select the ListViewItem when clicked - fix for issue #1
+                listViewItem.IsSelected = true;
             }
             
             if (config != null)
             {
+                // Store the dragged item and select it in the list view
                 _draggedItem = config;
+                lvWindowConfigs.SelectedItem = config;
                 
-                // Set up the drag & drop operation
+                // Handle left button mouse down as potential drag start
                 var dragData = new DataObject("WindowConfig", config);
                 DragDrop.DoDragDrop(sender as DependencyObject, dragData, DragDropEffects.Move);
+                
+                // Force refresh the ListView to ensure hover states are properly updated
+                lvWindowConfigs.Items.Refresh();
             }
         }
         

@@ -105,7 +105,7 @@
         </Style>
     </Window.Resources>
 
-    <Border CornerRadius="10" Background="{StaticResource FluentBackgroundBrush}" BorderBrush="Transparent" BorderThickness="0">
+    <Border Background="{StaticResource FluentBackgroundBrush}" BorderBrush="Transparent" BorderThickness="0">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="32"/>

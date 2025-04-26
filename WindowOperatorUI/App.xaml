@@ -321,10 +321,10 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Window}">
-                        <Grid Margin="10">
+                        <Grid Margin="30">
                             <Rectangle Name="ShadowRectangle" Fill="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
                                 <Rectangle.Effect>
-                                    <DropShadowEffect BlurRadius="15" ShadowDepth="0" Color="Black" />
+                                    <DropShadowEffect BlurRadius="30" ShadowDepth="8" Color="Black" />
                                 </Rectangle.Effect>
                             </Rectangle>
                             <Border Background="{TemplateBinding Background}"
@@ -332,7 +332,7 @@
                                     BorderThickness="{TemplateBinding BorderThickness}"
                                     Padding="{TemplateBinding Margin}"
                                     SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
-                                    CornerRadius="10">
+                                    CornerRadius="5">
                                 <ContentPresenter />
                             </Border>
                         </Grid>

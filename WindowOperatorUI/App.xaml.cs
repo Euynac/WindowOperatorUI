@@ -256,7 +256,7 @@ namespace WindowOperatorUI
                 var hwnd = IntPtr.Zero;
                 var windowTitle = string.Empty;
                 
-                for (var i = 0; i < 10; i++)
+                for (var i = 0; i < 60; i++)
                 {
                     Thread.Sleep(500);
                     try

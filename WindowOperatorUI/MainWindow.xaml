@@ -146,6 +146,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
                             <!-- Silent Mode checkbox is hidden from UI but kept in code -->
@@ -183,10 +184,18 @@
                             </CheckBox>
                             
                             <CheckBox Grid.Row="3" Grid.Column="0" x:Name="chkConfirmProcessKill" Content="Confirm Before Killing Process" 
-                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,0"
+                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
                                      Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
                                 <CheckBox.ToolTip>
                                     <TextBlock Text="Show confirmation dialog before terminating a process" TextWrapping="Wrap" MaxWidth="250"/>
+                                </CheckBox.ToolTip>
+                            </CheckBox>
+                            
+                            <CheckBox Grid.Row="4" Grid.Column="0" x:Name="chkBindToProcessWhenSelectingWindow" Content="Bind to Process When Selecting Window" 
+                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,0"
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                <CheckBox.ToolTip>
+                                    <TextBlock Text="Automatically bind to process when using the Select Window feature" TextWrapping="Wrap" MaxWidth="250"/>
                                 </CheckBox.ToolTip>
                             </CheckBox>
                         </Grid>

@@ -11,5 +11,6 @@ namespace WindowOperatorUI.Models
         public bool RunAsAdmin { get; set; } = false;
         public bool KeepOriginalSize { get; set; } = true;
         public bool ConfirmProcessKill { get; set; } = true;
+        public bool BindToProcessWhenSelectingWindow { get; set; } = false;
     }
 } 

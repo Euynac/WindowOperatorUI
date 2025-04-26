@@ -89,6 +89,7 @@ namespace WindowOperatorUI
                         chkRunAsAdmin.IsChecked = _appConfig.RunAsAdmin;
                         chkKeepOriginalSize.IsChecked = _appConfig.KeepOriginalSize;
                         chkConfirmProcessKill.IsChecked = _appConfig.ConfirmProcessKill;
+                        chkBindToProcessWhenSelectingWindow.IsChecked = _appConfig.BindToProcessWhenSelectingWindow;
                     }
                     finally
                     {
@@ -140,6 +141,7 @@ namespace WindowOperatorUI
                 _appConfig.RunAsAdmin = chkRunAsAdmin.IsChecked ?? false;
                 _appConfig.KeepOriginalSize = chkKeepOriginalSize.IsChecked ?? true;
                 _appConfig.ConfirmProcessKill = chkConfirmProcessKill.IsChecked ?? true;
+                _appConfig.BindToProcessWhenSelectingWindow = chkBindToProcessWhenSelectingWindow.IsChecked ?? false;
                 
                 // Update window configurations
                 _appConfig.Windows = _windowConfigs.ToList();
@@ -582,6 +584,36 @@ namespace WindowOperatorUI
                         config.Width = args.Width;
                         config.Height = args.Height;
                         
+                        // If BindToProcessWhenSelectingWindow is enabled, also bind to the process
+                        if (_appConfig.BindToProcessWhenSelectingWindow)
+                        {
+                            try
+                            {
+                                // Get process ID from window handle
+                                int processId = 0;
+                                NativeMethods.GetWindowThreadProcessId(args.WindowHandle, out processId);
+                                
+                                if (processId > 0)
+                                {
+                                    var process = Process.GetProcessById(processId);
+                                    
+                                    // Get the window title
+                                    var windowTitle = NativeMethods.GetWindowTitle(args.WindowHandle);
+                                    
+                                    // Store window binding information
+                                    config.BoundWindowHandle = args.WindowHandle;
+                                    config.BoundProcessId = processId;
+                                    config.BoundWindowTitle = windowTitle;
+                                    
+                                    NotificationService.ShowSuccess($"Window bound to process: {windowTitle}");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                NotificationService.ShowError($"Error binding to process: {ex.Message}");
+                            }
+                        }
+                        
                         // Refresh the list view to show updated values
                         lvWindowConfigs.Items.Refresh();
                     }
@@ -727,6 +759,10 @@ namespace WindowOperatorUI
                 else if (checkBox == chkConfirmProcessKill)
                 {
                     _appConfig.ConfirmProcessKill = checkBox.IsChecked ?? true;
+                }
+                else if (checkBox == chkBindToProcessWhenSelectingWindow)
+                {
+                    _appConfig.BindToProcessWhenSelectingWindow = checkBox.IsChecked ?? false;
                 }
             }
             

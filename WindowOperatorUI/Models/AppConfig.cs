@@ -10,5 +10,6 @@ namespace WindowOperatorUI.Models
         public bool RunAtStartup { get; set; } = false;
         public bool RunAsAdmin { get; set; } = false;
         public bool KeepOriginalSize { get; set; } = true;
+        public bool ConfirmProcessKill { get; set; } = true;
     }
 } 

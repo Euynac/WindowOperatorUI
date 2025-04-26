@@ -88,6 +88,7 @@ namespace WindowOperatorUI
                         chkRunAtStartup.IsChecked = _appConfig.RunAtStartup;
                         chkRunAsAdmin.IsChecked = _appConfig.RunAsAdmin;
                         chkKeepOriginalSize.IsChecked = _appConfig.KeepOriginalSize;
+                        chkConfirmProcessKill.IsChecked = _appConfig.ConfirmProcessKill;
                     }
                     finally
                     {
@@ -138,6 +139,7 @@ namespace WindowOperatorUI
                 _appConfig.RunAtStartup = chkRunAtStartup.IsChecked ?? false;
                 _appConfig.RunAsAdmin = chkRunAsAdmin.IsChecked ?? false;
                 _appConfig.KeepOriginalSize = chkKeepOriginalSize.IsChecked ?? true;
+                _appConfig.ConfirmProcessKill = chkConfirmProcessKill.IsChecked ?? true;
                 
                 // Update window configurations
                 _appConfig.Windows = _windowConfigs.ToList();
@@ -722,6 +724,10 @@ namespace WindowOperatorUI
                         }
                     }
                 }
+                else if (checkBox == chkConfirmProcessKill)
+                {
+                    _appConfig.ConfirmProcessKill = checkBox.IsChecked ?? true;
+                }
             }
             
             // 不需要立即保存，用户将在准备好时保存
@@ -1211,6 +1217,142 @@ namespace WindowOperatorUI
             catch (Exception ex)
             {
                 NotificationService.ShowError($"Error opening application directory: {ex.Message}");
+            }
+        }
+
+        private void BtnBindProcess_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { Tag: WindowConfig config })
+            {
+                // Show the process selector dialog
+                var processSelector = new ProcessSelectorDialog();
+                if (processSelector.ShowDialog() == true)
+                {
+                    var selectedProcess = processSelector.SelectedProcess;
+                    if (selectedProcess != null)
+                    {
+                        try
+                        {
+                            // Get the main window handle of the process
+                            var hwnd = selectedProcess.MainWindowHandle;
+                            
+                            if (hwnd == IntPtr.Zero)
+                            {
+                                NotificationService.ShowWarning("Selected process doesn't have a main window yet. Please wait for it to initialize or select another process.");
+                                return;
+                            }
+                            
+                            // Get the window title
+                            var windowTitle = NativeMethods.GetWindowTitle(hwnd);
+                            
+                            // Get the executable path
+                            var exePath = selectedProcess.MainModule?.FileName ?? "";
+                            
+                            if (string.IsNullOrEmpty(exePath))
+                            {
+                                NotificationService.ShowError("Could not determine executable path for the selected process.");
+                                return;
+                            }
+                            
+                            // Update the config
+                            config.ExePath = exePath;
+                            
+                            // Get window position and size
+                            var rect = new NativeMethods.RECT();
+                            if (NativeMethods.GetWindowRect(hwnd, ref rect))
+                            {
+                                config.X = rect.Left;
+                                config.Y = rect.Top;
+                                
+                                // If not keeping original size, store the current dimensions
+                                if (!_appConfig.KeepOriginalSize)
+                                {
+                                    config.Width = rect.Right - rect.Left;
+                                    config.Height = rect.Bottom - rect.Top;
+                                }
+                            }
+                            
+                            // Store window binding information
+                            config.BoundWindowHandle = hwnd;
+                            config.BoundProcessId = selectedProcess.Id;
+                            config.BoundWindowTitle = windowTitle;
+                            
+                            // Refresh the list view to show bound window controls
+                            lvWindowConfigs.Items.Refresh();
+                            
+                            NotificationService.ShowSuccess($"Successfully bound to process: {windowTitle}");
+                        }
+                        catch (Exception ex)
+                        {
+                            NotificationService.ShowError($"Error binding to process: {ex.Message}");
+                        }
+                    }
+                }
+            }
+        }
+        
+        private void BtnKillProcess_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { Tag: WindowConfig config })
+            {
+                try
+                {
+                    // Check if the process is still running
+                    if (config.BoundProcessId <= 0)
+                    {
+                        NotificationService.ShowWarning("No process is bound to this configuration.");
+                        return;
+                    }
+                    
+                    // Try to get the process
+                    Process process = null;
+                    try
+                    {
+                        process = Process.GetProcessById(config.BoundProcessId);
+                    }
+                    catch (ArgumentException)
+                    {
+                        NotificationService.ShowWarning("The process is no longer running.");
+                        UnbindWindow(config);
+                        return;
+                    }
+                    
+                    // Check if we need to confirm
+                    bool shouldKill = true;
+                    if (_appConfig.ConfirmProcessKill)
+                    {
+                        var result = MessageBox.Show(
+                            $"Are you sure you want to terminate the process '{config.BoundWindowTitle}'?",
+                            "Confirm Process Termination",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Warning);
+                            
+                        shouldKill = result == MessageBoxResult.Yes;
+                    }
+                    
+                    if (shouldKill)
+                    {
+                        // Kill the process
+                        process.Kill();
+                        
+                        // Wait a moment to ensure the process has been terminated
+                        if (process.WaitForExit(1000))
+                        {
+                            NotificationService.ShowSuccess($"Process '{config.BoundWindowTitle}' has been terminated.");
+                            
+                            // Unbind the window since the process is gone
+                            UnbindWindow(config);
+                        }
+                        else
+                        {
+                            NotificationService.ShowWarning("Process termination timed out. It might still be running.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    NotificationService.ShowError($"Error terminating process: {ex.Message}");
+                }
             }
         }
     }

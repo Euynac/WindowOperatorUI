@@ -257,7 +257,7 @@ namespace WindowOperatorUI.Controls
                     }
                     catch (Exception ex)
                     {
-                        NotificationService.ShowError($"获取窗口信息时出错: {ex.Message}");
+                        NotificationService.ShowError($"Error getting window information: {ex.Message}");
                         WindowSelected?.Invoke(this, new WindowSelectedEventArgs());
                     }
                 }
@@ -313,7 +313,7 @@ namespace WindowOperatorUI.Controls
                                 
                                 var processId = 0;
                                 NativeMethods.GetWindowThreadProcessId(hwnd, out processId);
-                                var processName = "未知进程";
+                                var processName = "Unknown process";
                                 
                                 try
                                 {
@@ -323,7 +323,7 @@ namespace WindowOperatorUI.Controls
                                 catch { }
                                 
                                 // 更新窗口信息文本
-                                _infoTextBlock.Text = $"窗口: {windowTitle}\n进程: {processName}\n位置: ({rect.Left}, {rect.Top})\n大小: {rect.Right - rect.Left} x {rect.Bottom - rect.Top}";
+                                _infoTextBlock.Text = $"Window: {windowTitle}\nProcess: {processName}\nPosition: ({rect.Left}, {rect.Top})\nSize: {rect.Right - rect.Left} x {rect.Bottom - rect.Top}";
                                 
                                 // 使用正确的方法计算高亮框位置
                                 UpdateHighlightBorderPosition(rect);
@@ -333,7 +333,7 @@ namespace WindowOperatorUI.Controls
                         {
                             // 如果获取窗口信息出错，隐藏高亮框
                             _highlightBorder.Visibility = Visibility.Hidden;
-                            _infoTextBlock.Text = $"无法获取窗口信息: {ex.Message}";
+                            _infoTextBlock.Text = $"Error: {ex.Message}";
                         }
                     }
                 }
@@ -348,7 +348,7 @@ namespace WindowOperatorUI.Controls
             catch (Exception ex)
             {
                 // 发生异常时更新文本
-                _infoTextBlock.Text = $"出错: {ex.Message}";
+                _infoTextBlock.Text = $"Error: {ex.Message}";
                 _highlightBorder.Visibility = Visibility.Hidden;
             }
         }

@@ -148,15 +148,17 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
+                            <!-- Silent Mode checkbox is hidden from UI but kept in code -->
                             <CheckBox Grid.Row="0" Grid.Column="0" x:Name="chkSilentMode" Content="Silent Mode" 
                                      Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8" 
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"
+                                     Visibility="Collapsed">
                                 <CheckBox.ToolTip>
                                     <TextBlock Text="Disable notification sounds and minimize visual notifications" TextWrapping="Wrap" MaxWidth="250"/>
                                 </CheckBox.ToolTip>
                             </CheckBox>
                             
-                            <CheckBox Grid.Row="1" Grid.Column="0" x:Name="chkRunAtStartup" Content="Run at Startup" 
+                            <CheckBox Grid.Row="0" Grid.Column="0" x:Name="chkRunAtStartup" Content="Run at Startup" 
                                      Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
                                      Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
                                 <CheckBox.ToolTip>
@@ -164,7 +166,7 @@
                                 </CheckBox.ToolTip>
                             </CheckBox>
                             
-                            <CheckBox Grid.Row="2" Grid.Column="0" x:Name="chkRunAsAdmin" Content="Run as Administrator" 
+                            <CheckBox Grid.Row="1" Grid.Column="0" x:Name="chkRunAsAdmin" Content="Run as Administrator" 
                                      Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
                                      Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
                                 <CheckBox.ToolTip>
@@ -172,11 +174,19 @@
                                 </CheckBox.ToolTip>
                             </CheckBox>
                             
-                            <CheckBox Grid.Row="3" Grid.Column="0" x:Name="chkKeepOriginalSize" Content="Keep Original Window Size" 
-                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,0"
+                            <CheckBox Grid.Row="2" Grid.Column="0" x:Name="chkKeepOriginalSize" Content="Keep Original Window Size" 
+                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
                                      Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
                                 <CheckBox.ToolTip>
                                     <TextBlock Text="Maintain the original size of windows when positioning them" TextWrapping="Wrap" MaxWidth="250"/>
+                                </CheckBox.ToolTip>
+                            </CheckBox>
+                            
+                            <CheckBox Grid.Row="3" Grid.Column="0" x:Name="chkConfirmProcessKill" Content="Confirm Before Killing Process" 
+                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,0"
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                <CheckBox.ToolTip>
+                                    <TextBlock Text="Show confirmation dialog before terminating a process" TextWrapping="Wrap" MaxWidth="250"/>
                                 </CheckBox.ToolTip>
                             </CheckBox>
                         </Grid>
@@ -305,6 +315,9 @@
                                             <Button x:Name="btnSelectWindow" Content="+" Click="BtnSelectWindow_Click" Tag="{Binding}"
                                                     Style="{StaticResource FluentButtonStyle}" 
                                                     Padding="8,4" Margin="0,0,5,0" ToolTip="Select Window"/>
+                                            <Button x:Name="btnBindProcess" Content="📎" Click="BtnBindProcess_Click" Tag="{Binding}"
+                                                    Style="{StaticResource FluentButtonStyle}" 
+                                                    Padding="8,4" Margin="0,0,5,0" ToolTip="Bind to Process"/>
                                             <Button x:Name="btnEditPath" Content="✏" Click="BtnEditPath_Click" Tag="{Binding}"
                                                     Style="{StaticResource FluentButtonStyle}" Padding="8,4" Margin="0,0,5,0" ToolTip="Edit Path"/>
                                             <Button x:Name="btnRunConfig" Content="▶" Click="BtnRunConfig_Click" Tag="{Binding}" 
@@ -341,6 +354,17 @@
                                                     <Button Content="Update Z-Order" Click="BtnUpdateZOrder_Click" Tag="{Binding}"
                                                             Style="{StaticResource FluentAccentButtonStyle}" Padding="10,4" Margin="0,0,8,0"
                                                             FontSize="11"/>
+                                                    
+                                                    <Button Content="Kill Process" Click="BtnKillProcess_Click" Tag="{Binding}"
+                                                            Style="{StaticResource FluentButtonStyle}" Padding="10,4" Margin="0,0,8,0"
+                                                            ToolTip="Terminate the associated process"
+                                                            FontSize="11">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="4"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
                                                     
                                                     <Button Content="Unbind" Click="BtnUnbindWindow_Click" Tag="{Binding}"
                                                             Padding="10,4" Background="#E53935" Foreground="White"

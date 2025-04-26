@@ -31,6 +31,10 @@ namespace WindowOperatorUI.Models
         [System.Text.Json.Serialization.JsonIgnore]
         public bool IsBound => BoundWindowHandle != IntPtr.Zero;
         
+        // Real-time process monitoring information
+        [System.Text.Json.Serialization.JsonIgnore]
+        public ProcessDetails ProcessDetails { get; set; }
+        
         // Creates a deep copy of the current configuration
         public WindowConfig Clone()
         {

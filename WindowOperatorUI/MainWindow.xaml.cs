@@ -19,6 +19,7 @@ using System.Threading;
 using Microsoft.Win32;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace WindowOperatorUI
 {
@@ -38,6 +39,11 @@ namespace WindowOperatorUI
         private bool _isInitializing = true; // 添加标志以防止初始化触发事件
         private Point _dragStartPoint;
         private bool _isDragging = false;
+        
+        // Process monitoring timer
+        private System.Windows.Threading.DispatcherTimer _processMonitoringTimer;
+        private Dictionary<int, DateTime> _processLastCheckTime = new Dictionary<int, DateTime>();
+        private Dictionary<int, TimeSpan> _processLastCpuTime = new Dictionary<int, TimeSpan>();
 
         public MainWindow()
         {
@@ -56,8 +62,15 @@ namespace WindowOperatorUI
             // Initialize order numbers if needed
             UpdateConfigurationOrder();
             
-            // Add loaded event handler for acrylic effect
+            // Add event handlers
             this.Loaded += MainWindow_Loaded;
+            this.Closing += MainWindow_Closing;
+            
+            // Start process monitoring if enabled
+            if (_appConfig.ShowBoundProcessDetails)
+            {
+                StartProcessMonitoring();
+            }
             
             _isInitializing = false; // 初始化完成后关闭标志
         }
@@ -66,6 +79,18 @@ namespace WindowOperatorUI
         {
             // Apply acrylic effect to window with dark tint
             WindowBackdrop.ApplyAcrylicEffect(this, 0x99202020);
+        }
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Stop process monitoring
+            StopProcessMonitoring();
+            
+            // Unbind all windows to ensure proper cleanup
+            foreach (var config in _windowConfigs.Where(c => c.IsBound).ToList())
+            {
+                UnbindWindow(config);
+            }
         }
 
         private void LoadConfiguration()
@@ -90,6 +115,7 @@ namespace WindowOperatorUI
                         chkKeepOriginalSize.IsChecked = _appConfig.KeepOriginalSize;
                         chkConfirmProcessKill.IsChecked = _appConfig.ConfirmProcessKill;
                         chkBindToProcessWhenSelectingWindow.IsChecked = _appConfig.BindToProcessWhenSelectingWindow;
+                        chkShowBoundProcessDetails.IsChecked = _appConfig.ShowBoundProcessDetails;
                     }
                     finally
                     {
@@ -142,6 +168,7 @@ namespace WindowOperatorUI
                 _appConfig.KeepOriginalSize = chkKeepOriginalSize.IsChecked ?? true;
                 _appConfig.ConfirmProcessKill = chkConfirmProcessKill.IsChecked ?? true;
                 _appConfig.BindToProcessWhenSelectingWindow = chkBindToProcessWhenSelectingWindow.IsChecked ?? false;
+                _appConfig.ShowBoundProcessDetails = chkShowBoundProcessDetails.IsChecked ?? true;
                 
                 // Update window configurations
                 _appConfig.Windows = _windowConfigs.ToList();
@@ -540,9 +567,23 @@ namespace WindowOperatorUI
         
         private void UnbindWindow(WindowConfig config)
         {
+            // Clear process monitoring data
+            if (_processLastCheckTime.ContainsKey(config.BoundProcessId))
+            {
+                _processLastCheckTime.Remove(config.BoundProcessId);
+            }
+            
+            if (_processLastCpuTime.ContainsKey(config.BoundProcessId))
+            {
+                _processLastCpuTime.Remove(config.BoundProcessId);
+            }
+            
+            // Clear window binding information
             config.BoundWindowHandle = IntPtr.Zero;
             config.BoundProcessId = 0;
             config.BoundWindowTitle = string.Empty;
+            config.ProcessDetails = null;
+            
             lvWindowConfigs.Items.Refresh();
         }
         
@@ -763,6 +804,20 @@ namespace WindowOperatorUI
                 else if (checkBox == chkBindToProcessWhenSelectingWindow)
                 {
                     _appConfig.BindToProcessWhenSelectingWindow = checkBox.IsChecked ?? false;
+                }
+                else if (checkBox == chkShowBoundProcessDetails)
+                {
+                    _appConfig.ShowBoundProcessDetails = checkBox.IsChecked ?? true;
+                    
+                    // When this setting changes, we need to start or stop the process monitoring
+                    if (_appConfig.ShowBoundProcessDetails)
+                    {
+                        StartProcessMonitoring();
+                    }
+                    else
+                    {
+                        StopProcessMonitoring();
+                    }
                 }
             }
             
@@ -1391,5 +1446,174 @@ namespace WindowOperatorUI
                 }
             }
         }
+        
+        #region Process Monitoring
+
+        private void StartProcessMonitoring()
+        {
+            // If timer already exists and is running, stop it first
+            StopProcessMonitoring();
+            
+            // Create and start the timer
+            _processMonitoringTimer = new DispatcherTimer();
+            _processMonitoringTimer.Tick += ProcessMonitoringTimer_Tick;
+            _processMonitoringTimer.Interval = TimeSpan.FromSeconds(2);
+            _processMonitoringTimer.Start();
+            
+            // Update immediately
+            UpdateProcessDetails();
+        }
+        
+        private void StopProcessMonitoring()
+        {
+            if (_processMonitoringTimer != null)
+            {
+                _processMonitoringTimer.Stop();
+                _processMonitoringTimer = null;
+            }
+            
+            // Clear any existing process details
+            foreach (var config in _windowConfigs)
+            {
+                config.ProcessDetails = null;
+            }
+            
+            // Clear tracking dictionaries
+            _processLastCheckTime.Clear();
+            _processLastCpuTime.Clear();
+            
+            // Update UI
+            lvWindowConfigs.Items.Refresh();
+        }
+        
+        private void ProcessMonitoringTimer_Tick(object sender, EventArgs e)
+        {
+            UpdateProcessDetails();
+        }
+        
+        private void UpdateProcessDetails()
+        {
+            // Get all bound configs
+            var boundConfigs = _windowConfigs.Where(c => c.IsBound).ToList();
+            
+            if (boundConfigs.Count == 0)
+            {
+                return; // No bound processes to monitor
+            }
+            
+            foreach (var config in boundConfigs)
+            {
+                try
+                {
+                    // Check if the process still exists
+                    Process process = null;
+                    try
+                    {
+                        process = Process.GetProcessById(config.BoundProcessId);
+                    }
+                    catch (ArgumentException)
+                    {
+                        // Process no longer exists
+                        UnbindWindow(config);
+                        continue;
+                    }
+                    
+                    // Check if the window is still valid
+                    if (!IsWindowHandleValid(config.BoundWindowHandle))
+                    {
+                        UnbindWindow(config);
+                        continue;
+                    }
+                    
+                    // Create or get the process details object
+                    var details = config.ProcessDetails ?? new ProcessDetails();
+                    
+                    // Update identification info
+                    details.ProcessId = config.BoundProcessId;
+                    details.ProcessName = process.ProcessName;
+                    details.WindowTitle = config.BoundWindowTitle;
+                    
+                    // Get window position and size
+                    var rect = new NativeMethods.RECT();
+                    if (NativeMethods.GetWindowRect(config.BoundWindowHandle, ref rect))
+                    {
+                        details.X = rect.Left;
+                        details.Y = rect.Top;
+                        details.Width = rect.Right - rect.Left;
+                        details.Height = rect.Bottom - rect.Top;
+                    }
+                    
+                    // Update memory usage
+                    details.MemoryUsageBytes = process.WorkingSet64;
+                    
+                    // Calculate CPU usage
+                    UpdateCpuUsage(process, details);
+                    
+                    // Assign updated details back to the config
+                    config.ProcessDetails = details;
+                }
+                catch (Exception ex)
+                {
+                    // Just skip this process if we can't get details
+                }
+            }
+            
+            // Refresh the UI
+            lvWindowConfigs.Items.Refresh();
+        }
+        
+        private void UpdateCpuUsage(Process process, ProcessDetails details)
+        {
+            try
+            {
+                int processId = process.Id;
+                DateTime currentTime = DateTime.Now;
+                TimeSpan currentTotalProcessorTime = process.TotalProcessorTime;
+                
+                // If we have previous measurements for this process
+                if (_processLastCheckTime.ContainsKey(processId) && _processLastCpuTime.ContainsKey(processId))
+                {
+                    DateTime lastTime = _processLastCheckTime[processId];
+                    TimeSpan lastTotalProcessorTime = _processLastCpuTime[processId];
+                    
+                    // Calculate time difference
+                    TimeSpan timeDifference = currentTime - lastTime;
+                    double elapsedSeconds = timeDifference.TotalSeconds;
+                    
+                    // Calculate CPU time difference
+                    TimeSpan cpuDifference = currentTotalProcessorTime - lastTotalProcessorTime;
+                    double cpuUsageTotal = cpuDifference.TotalSeconds;
+                    
+                    // Calculate CPU percentage (adjust for multi-core processors)
+                    double cpuUsagePercentage = (cpuUsageTotal / elapsedSeconds) * 100.0;
+                    
+                    // Adjust for multi-core systems
+                    int processorCount = Environment.ProcessorCount;
+                    cpuUsagePercentage /= processorCount;
+                    
+                    // Cap at 100% to avoid values over 100%
+                    cpuUsagePercentage = Math.Min(100.0, cpuUsagePercentage);
+                    
+                    // Update the details
+                    details.CpuUsage = cpuUsagePercentage;
+                }
+                else
+                {
+                    // First-time measurement for this process
+                    details.CpuUsage = 0;
+                }
+                
+                // Store current values for next calculation
+                _processLastCheckTime[processId] = currentTime;
+                _processLastCpuTime[processId] = currentTotalProcessorTime;
+            }
+            catch (Exception)
+            {
+                // If we can't get processor time, just set to 0
+                details.CpuUsage = 0;
+            }
+        }
+        
+        #endregion
     }
 }

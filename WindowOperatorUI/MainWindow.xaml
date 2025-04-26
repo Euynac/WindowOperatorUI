@@ -147,6 +147,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
                             <!-- Silent Mode checkbox is hidden from UI but kept in code -->
@@ -192,10 +193,18 @@
                             </CheckBox>
                             
                             <CheckBox Grid.Row="4" Grid.Column="0" x:Name="chkBindToProcessWhenSelectingWindow" Content="Bind to Process When Selecting Window" 
-                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,0"
+                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
                                      Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
                                 <CheckBox.ToolTip>
                                     <TextBlock Text="Automatically bind to process when using the Select Window feature" TextWrapping="Wrap" MaxWidth="250"/>
+                                </CheckBox.ToolTip>
+                            </CheckBox>
+                            
+                            <CheckBox Grid.Row="5" Grid.Column="0" x:Name="chkShowBoundProcessDetails" Content="Show Bound Process Details" 
+                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,0"
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                <CheckBox.ToolTip>
+                                    <TextBlock Text="Display real-time information about bound processes (size, position, CPU, memory)" TextWrapping="Wrap" MaxWidth="250"/>
                                 </CheckBox.ToolTip>
                             </CheckBox>
                         </Grid>
@@ -350,12 +359,73 @@
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="Auto"/>
                                                     <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
                                                 </Grid.RowDefinitions>
                                                 
                                                 <TextBlock Grid.Row="0" Text="{Binding BoundWindowTitle, StringFormat='Bound to: {0}'}" 
                                                            Foreground="#AAFFFFFF" FontSize="12" Margin="0,0,0,10"/>
                                                 
-                                                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                                <!-- Process Monitoring Info -->
+                                                <Grid Grid.Row="1" Margin="0,0,0,10" x:Name="processMonitoringGrid">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding ProcessDetails}" Value="{x:Null}">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
+                                                    
+                                                    <StackPanel>
+                                                        <Grid Margin="0,5,0,0">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            
+                                                            <TextBlock Grid.Column="0" Text="Position: " 
+                                                                      Foreground="#AAFFFFFF" FontSize="12"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding ProcessDetails.FormattedPosition}" 
+                                                                      Foreground="#FFFFFF" FontSize="12"/>
+                                                            
+                                                            <TextBlock Grid.Column="2" Text="Size: " 
+                                                                      Foreground="#AAFFFFFF" FontSize="12" Margin="10,0,0,0"/>
+                                                            <TextBlock Grid.Column="3" Text="{Binding ProcessDetails.FormattedSize}" 
+                                                                      Foreground="#FFFFFF" FontSize="12"/>
+                                                        </Grid>
+                                                        
+                                                        <Grid Margin="0,5,0,0">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            
+                                                            <TextBlock Grid.Column="0" Text="PID: " 
+                                                                      Foreground="#AAFFFFFF" FontSize="12"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding ProcessDetails.ProcessId}" 
+                                                                      Foreground="#FFFFFF" FontSize="12"/>
+                                                            
+                                                            <TextBlock Grid.Column="2" Text="CPU: " 
+                                                                      Foreground="#AAFFFFFF" FontSize="12" Margin="10,0,0,0"/>
+                                                            <TextBlock Grid.Column="3" Text="{Binding ProcessDetails.FormattedCpuUsage}" 
+                                                                      Foreground="#FFFFFF" FontSize="12"/>
+                                                            
+                                                            <TextBlock Grid.Column="4" Text="Memory: " 
+                                                                      Foreground="#AAFFFFFF" FontSize="12" Margin="10,0,0,0"/>
+                                                            <TextBlock Grid.Column="5" Text="{Binding ProcessDetails.FormattedMemoryUsage}" 
+                                                                      Foreground="#FFFFFF" FontSize="12"/>
+                                                        </Grid>
+                                                    </StackPanel>
+                                                </Grid>
+                                                
+                                                <StackPanel Grid.Row="2" Orientation="Horizontal">
                                                     <Button Content="Apply Size/Pos" Click="BtnApplyPosition_Click" Tag="{Binding}"
                                                             Style="{StaticResource FluentAccentButtonStyle}" Padding="10,4" Margin="0,0,8,0" 
                                                             FontSize="11"/>

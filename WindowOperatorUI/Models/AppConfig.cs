@@ -12,5 +12,6 @@ namespace WindowOperatorUI.Models
         public bool KeepOriginalSize { get; set; } = true;
         public bool ConfirmProcessKill { get; set; } = true;
         public bool BindToProcessWhenSelectingWindow { get; set; } = false;
+        public bool ShowBoundProcessDetails { get; set; } = true;
     }
 } 

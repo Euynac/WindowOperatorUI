@@ -7,7 +7,7 @@ namespace WindowOperatorUI.Services
 {
     public class NotificationService
     {
-        private static readonly List<ToastNotification> _activeNotifications = new();
+        private static readonly List<ToastNotification> _activeNotifications = [];
         private static Action _lastUndoAction;
         
         public static void ShowSuccess(string message, int autoCloseSeconds = 3)

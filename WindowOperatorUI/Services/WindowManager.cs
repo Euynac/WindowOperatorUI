@@ -21,17 +21,17 @@ namespace WindowOperatorUI.Services
             try
             {
                 // Log original window size and position for debugging
-                NativeMethods.RECT originalRect = new NativeMethods.RECT();
+                var originalRect = new NativeMethods.RECT();
                 if (NativeMethods.GetWindowRect(hwnd, ref originalRect))
                 {
-                    int originalWidth = originalRect.Right - originalRect.Left;
-                    int originalHeight = originalRect.Bottom - originalRect.Top;
+                    var originalWidth = originalRect.Right - originalRect.Left;
+                    var originalHeight = originalRect.Bottom - originalRect.Top;
                     _logger.Log($"[INFO] Window '{windowTitle}' original position: ({originalRect.Left}, {originalRect.Top}), size: {originalWidth}x{originalHeight}");
                 }
 
                 _logger.Log($"[INFO] Setting window '{windowTitle}' position to ({config.X}, {config.Y})");
                 
-                bool resizeSuccess = false;
+                var resizeSuccess = false;
                 
                 // First, handle size and position
                 if (config is { Width: not null, Height: not null })
@@ -39,10 +39,10 @@ namespace WindowOperatorUI.Services
                     _logger.Log($"[INFO] Attempting to resize window '{windowTitle}' to {config.Width}x{config.Height}");
 
                     // 尝试多次设置窗口大小，提高成功率
-                    for (int attempt = 1; attempt <= MAX_RESIZE_RETRIES; attempt++)
+                    for (var attempt = 1; attempt <= MAX_RESIZE_RETRIES; attempt++)
                     {
                         // 先使用SetWindowPos移动窗口到目标位置（不改变大小）
-                        bool posSuccess = NativeMethods.SetWindowPos(
+                        var posSuccess = NativeMethods.SetWindowPos(
                             hwnd, 
                             IntPtr.Zero,
                             config.X, 
@@ -155,15 +155,15 @@ namespace WindowOperatorUI.Services
         private void VerifyWindowSizeAndPosition(IntPtr hwnd, WindowConfig config, string windowTitle)
         {
             // 验证窗口大小是否符合预期
-            NativeMethods.RECT rect = new NativeMethods.RECT();
+            var rect = new NativeMethods.RECT();
             if (NativeMethods.GetWindowRect(hwnd, ref rect))
             {
-                int width = rect.Right - rect.Left;
-                int height = rect.Bottom - rect.Top;
+                var width = rect.Right - rect.Left;
+                var height = rect.Bottom - rect.Top;
                 
                 _logger.Log($"[INFO] After resize: Window '{windowTitle}' position is ({rect.Left}, {rect.Top}), size is {width}x{height}");
                 
-                bool sizeMatchesExpected = true;
+                var sizeMatchesExpected = true;
                 
                 // 允许1像素的误差，避免舍入问题
                 if (Math.Abs(width - config.Width.Value) > 1)
@@ -199,7 +199,7 @@ namespace WindowOperatorUI.Services
             _logger.Log($"[INFO] Reset Z-order of window '{windowTitle}' to non-topmost state");
             
             // Handle bottom positioning
-            if (config.EnableAlwaysOnBottom || (config.Order.HasValue && config.Order.Value <= 0))
+            if (config.EnableAlwaysOnBottom || config.Order is <= 0)
             {
                 NativeMethods.SetWindowPos(hwnd, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flags);
                 _logger.Log($"[INFO] Set window '{windowTitle}' to bottom of Z-order");
@@ -227,7 +227,7 @@ namespace WindowOperatorUI.Services
             }
             
             // Handle Order if specified (this is separate from topmost setting)
-            if (config.Order.HasValue && config.Order.Value > 0)
+            if (config.Order is > 0)
             {
                 _logger.Log($"[INFO] Set window '{windowTitle}' Z-order to {config.Order.Value}");
                 // Note: Windows doesn't support exact Z-order numbers, but this could be extended

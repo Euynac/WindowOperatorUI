@@ -54,7 +54,7 @@ namespace WindowOperatorUI.Controls
         {
             // Track notification count
             _activeNotificationCount++;
-            int index = _activeNotificationCount;
+            var index = _activeNotificationCount;
             
             // Get the work area (screen minus taskbar)
             var workArea = SystemParameters.WorkArea;
@@ -65,7 +65,7 @@ namespace WindowOperatorUI.Controls
             Loaded += (s, e) =>
             {
                 // Get notification height with margins
-                double height = ActualHeight + 20; // Add margin
+                var height = ActualHeight + 20; // Add margin
                 
                 // Calculate position from bottom of screen
                 Left = workArea.Right - ActualWidth - 20;

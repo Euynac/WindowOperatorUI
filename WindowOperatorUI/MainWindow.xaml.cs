@@ -67,7 +67,7 @@ namespace WindowOperatorUI
                     _appConfig = JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
                     
                     // 确保在设置UI状态时不会触发事件
-                    bool oldInitializing = _isInitializing;
+                    var oldInitializing = _isInitializing;
                     _isInitializing = true;
                     
                     try
@@ -112,7 +112,7 @@ namespace WindowOperatorUI
 
         private void UpdateConfigurationOrder()
         {
-            int orderIndex = 1;
+            var orderIndex = 1;
             foreach (var config in _windowConfigs)
             {
                 config.Order = orderIndex++;
@@ -166,11 +166,11 @@ namespace WindowOperatorUI
         {
             WindowConfig config = null;
             
-            if (sender is Button button && button.Tag is WindowConfig buttonConfig)
+            if (sender is Button { Tag: WindowConfig buttonConfig })
             {
                 config = buttonConfig;
             }
-            else if (sender is MenuItem menuItem && menuItem.Tag is WindowConfig menuItemConfig)
+            else if (sender is MenuItem { Tag: WindowConfig menuItemConfig })
             {
                 config = menuItemConfig;
             }
@@ -247,8 +247,8 @@ namespace WindowOperatorUI
         {
             if (textBox != null && config != null)
             {
-                string path = textBox.Text;
-                string strippedPath = StripQuotesFromPath(path);
+                var path = textBox.Text;
+                var strippedPath = StripQuotesFromPath(path);
                 
                 if (path != strippedPath)
                 {
@@ -378,8 +378,8 @@ namespace WindowOperatorUI
         {
             return Task.Run(() => 
             {
-                IntPtr hwnd = IntPtr.Zero;
-                string windowTitle = string.Empty;
+                var hwnd = IntPtr.Zero;
+                var windowTitle = string.Empty;
                 
                 for (var i = 0; i < 10; i++)
                 {
@@ -419,26 +419,26 @@ namespace WindowOperatorUI
                     }
                     
                     // 使用 NativeMethods 查询当前窗口位置和大小，用作比较和日志记录
-                    NativeMethods.RECT originalRect = new NativeMethods.RECT();
-                    string currentSize = "Unknown";
-                    string currentPosition = "Unknown";
+                    var originalRect = new NativeMethods.RECT();
+                    var currentSize = "Unknown";
+                    var currentPosition = "Unknown";
                     
                     if (NativeMethods.GetWindowRect(config.BoundWindowHandle, ref originalRect))
                     {
-                        int originalWidth = originalRect.Right - originalRect.Left;
-                        int originalHeight = originalRect.Bottom - originalRect.Top;
+                        var originalWidth = originalRect.Right - originalRect.Left;
+                        var originalHeight = originalRect.Bottom - originalRect.Top;
                         currentSize = $"{originalWidth}x{originalHeight}";
                         currentPosition = $"({originalRect.Left}, {originalRect.Top})";
                     }
                     
-                    string targetSize = config.Width.HasValue && config.Height.HasValue
+                    var targetSize = config is { Width: not null, Height: not null }
                         ? $"{config.Width}x{config.Height}"
                         : "unchanged";
                         
-                    string targetPosition = $"({config.X}, {config.Y})";
+                    var targetPosition = $"({config.X}, {config.Y})";
                     
                     // 显示当前和目标值，便于诊断
-                    string message = $"Applying: Position {currentPosition} → {targetPosition}, Size {currentSize} → {targetSize}";
+                    var message = $"Applying: Position {currentPosition} → {targetPosition}, Size {currentSize} → {targetSize}";
                     NotificationService.ShowInfo(message, 2);
                     
                     if (_windowManager.PositionWindow(config.BoundWindowHandle, config, config.BoundWindowTitle))
@@ -446,12 +446,12 @@ namespace WindowOperatorUI
                         // 检查更新后的窗口位置和大小
                         if (NativeMethods.GetWindowRect(config.BoundWindowHandle, ref originalRect))
                         {
-                            int newWidth = originalRect.Right - originalRect.Left;
-                            int newHeight = originalRect.Bottom - originalRect.Top;
-                            string newSize = $"{newWidth}x{newHeight}";
-                            string newPosition = $"({originalRect.Left}, {originalRect.Top})";
+                            var newWidth = originalRect.Right - originalRect.Left;
+                            var newHeight = originalRect.Bottom - originalRect.Top;
+                            var newSize = $"{newWidth}x{newHeight}";
+                            var newPosition = $"({originalRect.Left}, {originalRect.Top})";
                             
-                            string resultMessage = $"Updated window: Position {newPosition}, Size {newSize}";
+                            var resultMessage = $"Updated window: Position {newPosition}, Size {newSize}";
                             NotificationService.ShowSuccess(resultMessage);
                         }
                         else
@@ -682,17 +682,17 @@ namespace WindowOperatorUI
                 }
                 else if (checkBox == chkRunAsAdmin)
                 {
-                    bool isChecked = checkBox.IsChecked ?? false;
+                    var isChecked = checkBox.IsChecked ?? false;
                     _appConfig.RunAsAdmin = isChecked;
                     
                     // 获取当前是否以管理员身份运行
-                    bool isCurrentlyAdmin = IsRunningAsAdmin();
+                    var isCurrentlyAdmin = IsRunningAsAdmin();
                     
                     // 如果当前状态与请求的状态不同，并且用户手动更改了此设置，询问是否重启
                     // 现在我们使用_isInitializing标志完全避免初始化时触发这段代码
                     if (isCurrentlyAdmin != isChecked)
                     {
-                        string message = isChecked ? 
+                        var message = isChecked ? 
                             "需要以管理员身份重新启动程序才能使此设置生效。是否立即重启？" : 
                             "需要以普通用户身份重新启动程序才能使此设置生效。是否立即重启？";
                         
@@ -825,8 +825,8 @@ namespace WindowOperatorUI
                     var draggedConfig = e.Data.GetData("WindowConfig") as WindowConfig;
                     if (draggedConfig != null && !ReferenceEquals(draggedConfig, targetConfig))
                     {
-                        int draggedIndex = _windowConfigs.IndexOf(draggedConfig);
-                        int targetIndex = _windowConfigs.IndexOf(targetConfig);
+                        var draggedIndex = _windowConfigs.IndexOf(draggedConfig);
+                        var targetIndex = _windowConfigs.IndexOf(targetConfig);
                         
                         if (draggedIndex >= 0 && targetIndex >= 0)
                         {
@@ -853,9 +853,9 @@ namespace WindowOperatorUI
                     string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                     
                     // 如果有多个文件被拖放，取第一个
-                    if (files != null && files.Length > 0)
+                    if (files is { Length: > 0 })
                     {
-                        string filePath = StripQuotesFromPath(files[0]);
+                        var filePath = StripQuotesFromPath(files[0]);
                         
                         // 更新配置中的路径
                         targetConfig.ExePath = filePath;
@@ -879,12 +879,12 @@ namespace WindowOperatorUI
         // New method to handle dragging of config items
         private void ConfigItem_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is Grid grid && grid.Tag is WindowConfig config)
+            if (sender is Grid { Tag: WindowConfig config } grid)
             {
                 _draggedItem = config;
                 
                 // Set up the drag & drop operation
-                DataObject dragData = new DataObject("WindowConfig", config);
+                var dragData = new DataObject("WindowConfig", config);
                 DragDrop.DoDragDrop(grid, dragData, DragDropEffects.Move);
             }
         }
@@ -898,10 +898,10 @@ namespace WindowOperatorUI
             try
             {
                 // 获取当前执行文件路径
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                var exePath = Process.GetCurrentProcess().MainModule.FileName;
                 
                 // 创建启动信息
-                ProcessStartInfo startInfo = new ProcessStartInfo
+                var startInfo = new ProcessStartInfo
                 {
                     FileName = exePath,
                     UseShellExecute = true,
@@ -951,10 +951,10 @@ namespace WindowOperatorUI
                 var principal = new System.Security.Principal.WindowsPrincipal(identity);
                 
                 // 检查是否具有管理员权限
-                bool isAdmin = principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+                var isAdmin = principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
                 
                 // 暂时禁用事件处理
-                bool oldInitializing = _isInitializing;
+                var oldInitializing = _isInitializing;
                 _isInitializing = true;
                 
                 try
@@ -1023,7 +1023,7 @@ namespace WindowOperatorUI
 
         private void TxtExePath_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (sender is TextBox textBox && textBox.Tag is WindowConfig config)
+            if (sender is TextBox { Tag: WindowConfig config } textBox)
             {
                 UpdatePathWithoutQuotes(textBox, config);
             }
@@ -1035,14 +1035,14 @@ namespace WindowOperatorUI
             {
                 try
                 {
-                    string path = config.ExePath;
+                    var path = config.ExePath;
                     if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path))
                     {
                         NotificationService.ShowWarning("Invalid file path. Cannot open directory.");
                         return;
                     }
                     
-                    string directory = System.IO.Path.GetDirectoryName(path);
+                    var directory = System.IO.Path.GetDirectoryName(path);
                     if (System.IO.Directory.Exists(directory))
                     {
                         // Open Windows Explorer at the file's directory and select the file
@@ -1093,7 +1093,7 @@ namespace WindowOperatorUI
             try
             {
                 // Get the directory where the application is running
-                string appDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 
                 if (System.IO.Directory.Exists(appDirectory))
                 {

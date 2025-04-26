@@ -24,7 +24,7 @@ namespace WindowOperatorUI
             base.OnStartup(e);
 
             // 检查命令行参数
-            bool runInBackground = false;
+            var runInBackground = false;
             
             if (e.Args.Length > 0)
             {
@@ -51,8 +51,8 @@ namespace WindowOperatorUI
 
             // 只有在非后台模式下才继续检查管理员权限
             // 检查是否需要以管理员身份运行
-            bool isAdmin = IsRunningAsAdmin();
-            bool shouldBeAdmin = ShouldRunAsAdmin();
+            var isAdmin = IsRunningAsAdmin();
+            var shouldBeAdmin = ShouldRunAsAdmin();
             
             // 如果需要管理员权限但当前不是管理员
             if (!isAdmin && shouldBeAdmin)
@@ -118,7 +118,7 @@ namespace WindowOperatorUI
             try
             {
                 // 获取当前执行文件路径
-                string exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+                var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
                 
                 // 创建启动信息
                 var startInfo = new System.Diagnostics.ProcessStartInfo
@@ -215,7 +215,7 @@ namespace WindowOperatorUI
                 }
 
                 var dimensions = "original size";
-                if (config.Width.HasValue && config.Height.HasValue)
+                if (config is { Width: not null, Height: not null })
                 {
                     dimensions = $"{config.Width}x{config.Height}";
                 }
@@ -230,11 +230,11 @@ namespace WindowOperatorUI
                     logger.Log($"[SUCCESS] Window '{windowTitle}' positioned successfully.");
                     
                     // 在调整完后再检查实际大小
-                    NativeMethods.RECT rect = new NativeMethods.RECT();
+                    var rect = new NativeMethods.RECT();
                     if (NativeMethods.GetWindowRect(hwnd, ref rect))
                     {
-                        int width = rect.Right - rect.Left;
-                        int height = rect.Bottom - rect.Top;
+                        var width = rect.Right - rect.Left;
+                        var height = rect.Bottom - rect.Top;
                         logger.Log($"[INFO] Final window '{windowTitle}' position: ({rect.Left}, {rect.Top}), size: {width}x{height}");
                     }
                 }
@@ -253,8 +253,8 @@ namespace WindowOperatorUI
         {
             return Task.Run(() => 
             {
-                IntPtr hwnd = IntPtr.Zero;
-                string windowTitle = string.Empty;
+                var hwnd = IntPtr.Zero;
+                var windowTitle = string.Empty;
                 
                 for (var i = 0; i < 10; i++)
                 {

@@ -309,11 +309,11 @@ namespace WindowOperatorUI.Controls
                             if (NativeMethods.GetWindowRect(hwnd, ref rect))
                             {
                                 // 获取窗口标题和进程信息
-                                string windowTitle = NativeMethods.GetWindowTitle(hwnd);
+                                var windowTitle = NativeMethods.GetWindowTitle(hwnd);
                                 
                                 var processId = 0;
                                 NativeMethods.GetWindowThreadProcessId(hwnd, out processId);
-                                string processName = "未知进程";
+                                var processName = "未知进程";
                                 
                                 try
                                 {
@@ -365,16 +365,16 @@ namespace WindowOperatorUI.Controls
                 }
                 
                 // 获取系统DPI缩放
-                Matrix transformToDevice = _presentationSource.CompositionTarget.TransformToDevice;
+                var transformToDevice = _presentationSource.CompositionTarget.TransformToDevice;
                 
                 // 获取屏幕坐标点 (左上角和右下角)
-                Point screenPointTopLeft = new Point(rect.Left, rect.Top);
-                Point screenPointBottomRight = new Point(rect.Right, rect.Bottom);
+                var screenPointTopLeft = new Point(rect.Left, rect.Top);
+                var screenPointBottomRight = new Point(rect.Right, rect.Bottom);
                 
                 // 转换为设备无关的逻辑坐标
                 // WPF使用设备无关像素(DIPs)，而Win32 API使用物理像素
-                Point devicePointTopLeft = transformToDevice.Transform(screenPointTopLeft);
-                Point devicePointBottomRight = transformToDevice.Transform(screenPointBottomRight);
+                var devicePointTopLeft = transformToDevice.Transform(screenPointTopLeft);
+                var devicePointBottomRight = transformToDevice.Transform(screenPointBottomRight);
                 
                 // 再转换为WPF窗口内的坐标
                 Point windowPointTopLeft;
@@ -386,8 +386,8 @@ namespace WindowOperatorUI.Controls
                     windowPointBottomRight = PointFromScreen(screenPointBottomRight);
                     
                     // 计算宽度和高度 (DPI校正后)
-                    double width = windowPointBottomRight.X - windowPointTopLeft.X;
-                    double height = windowPointBottomRight.Y - windowPointTopLeft.Y;
+                    var width = windowPointBottomRight.X - windowPointTopLeft.X;
+                    var height = windowPointBottomRight.Y - windowPointTopLeft.Y;
                     
                     // 设置高亮框位置和大小
                     _highlightBorder.Width = width;
@@ -400,13 +400,13 @@ namespace WindowOperatorUI.Controls
                     // 使用备用方法作为退路 - 直接使用设备坐标计算
                     try 
                     {
-                        double dpiScaleX = transformToDevice.M11;
-                        double dpiScaleY = transformToDevice.M22;
+                        var dpiScaleX = transformToDevice.M11;
+                        var dpiScaleY = transformToDevice.M22;
                         
-                        double left = rect.Left / dpiScaleX;
-                        double top = rect.Top / dpiScaleY;
-                        double width = (rect.Right - rect.Left) / dpiScaleX;
-                        double height = (rect.Bottom - rect.Top) / dpiScaleY;
+                        var left = rect.Left / dpiScaleX;
+                        var top = rect.Top / dpiScaleY;
+                        var width = (rect.Right - rect.Left) / dpiScaleX;
+                        var height = (rect.Bottom - rect.Top) / dpiScaleY;
                         
                         _highlightBorder.Width = width;
                         _highlightBorder.Height = height;
@@ -428,7 +428,7 @@ namespace WindowOperatorUI.Controls
         private Point GetMousePosition()
         {
             // 获取鼠标在屏幕上的位置
-            NativeMethods.POINT point = new NativeMethods.POINT();
+            var point = new NativeMethods.POINT();
             NativeMethods.GetCursorPos(ref point);
             return new Point(point.X, point.Y);
         }

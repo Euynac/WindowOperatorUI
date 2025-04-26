@@ -54,7 +54,16 @@ namespace WindowOperatorUI
             // Initialize order numbers if needed
             UpdateConfigurationOrder();
             
+            // Add loaded event handler for acrylic effect
+            this.Loaded += MainWindow_Loaded;
+            
             _isInitializing = false; // 初始化完成后关闭标志
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Apply acrylic effect to window with dark tint
+            WindowBackdrop.ApplyAcrylicEffect(this, 0x99202020);
         }
 
         private void LoadConfiguration()

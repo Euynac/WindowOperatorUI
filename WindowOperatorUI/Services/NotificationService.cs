@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using WindowOperatorUI.Controls;
+using WindowOperatorUI.Utils;
 
 namespace WindowOperatorUI.Services
 {
@@ -51,6 +52,12 @@ namespace WindowOperatorUI.Services
                 // Track notification
                 _activeNotifications.Add(notification);
                 notification.Closed += (s, e) => _activeNotifications.Remove(notification);
+                
+                // Apply the fluent acrylic effect
+                notification.Loaded += (sender, e) => 
+                {
+                    WindowBackdrop.ApplyAcrylicEffect(notification, 0xBB202020);
+                };
                 
                 // Show notification
                 notification.Show();

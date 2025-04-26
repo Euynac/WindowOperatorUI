@@ -25,12 +25,12 @@
         </Storyboard>
     </Window.Resources>
     
-    <Border CornerRadius="6" Background="#333333" Margin="10">
+    <Border CornerRadius="8" Background="#2D2D2D" Margin="10">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="10" Color="Black" ShadowDepth="1" Opacity="0.3"/>
+            <DropShadowEffect BlurRadius="15" Color="Black" ShadowDepth="3" Opacity="0.4"/>
         </Border.Effect>
         
-        <Grid Margin="15">
+        <Grid Margin="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -43,7 +43,7 @@
                        FontSize="24" 
                        Foreground="#4CAF50"
                        VerticalAlignment="Center"
-                       Margin="0,0,15,0"/>
+                       Margin="0,0,16,0"/>
             
             <!-- Message -->
             <TextBlock x:Name="MessageTextBlock" Grid.Column="1"
@@ -59,10 +59,29 @@
                     Foreground="#999999"
                     BorderThickness="0"
                     Click="CloseButton_Click"
-                    Padding="5"
+                    Padding="8"
                     Margin="10,0,0,0"
                     VerticalAlignment="Top"
-                    HorizontalAlignment="Right"/>
+                    HorizontalAlignment="Right">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#25FFFFFF"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#15FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
         </Grid>
     </Border>
 </Window> 

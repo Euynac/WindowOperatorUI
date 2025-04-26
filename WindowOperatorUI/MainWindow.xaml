@@ -34,12 +34,12 @@
             <Setter Property="Height" Value="30"/>
         </Style>
 
-        <Style x:Key="ConfigCheckboxStyle" TargetType="CheckBox">
+        <Style x:Key="ConfigCheckboxStyle" TargetType="CheckBox" BasedOn="{StaticResource FluentCheckBoxStyle}">
             <Setter Property="Margin" Value="0,0,8,0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <Style x:Key="NumberTextBoxStyle" TargetType="TextBox">
+        <Style x:Key="NumberTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}">
             <Setter Property="Width" Value="60"/>
             <Setter Property="Height" Value="24"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -47,7 +47,7 @@
             <Setter Property="TextAlignment" Value="Right"/>
         </Style>
 
-        <Style x:Key="PathTextBoxStyle" TargetType="TextBox">
+        <Style x:Key="PathTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource FluentTextBoxStyle}">
             <Setter Property="Height" Value="24"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Margin" Value="0,0,8,0"/>
@@ -59,22 +59,63 @@
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="IsHitTestVisible" Value="True"/>
         </Style>
+        
+        <!-- ScrollViewer Style with custom scrollbar -->
+        <Style x:Key="FluentScrollViewerStyle" TargetType="ScrollViewer">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollViewer">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <ScrollContentPresenter Grid.Column="0" Grid.Row="0"
+                                                   CanContentScroll="{TemplateBinding CanContentScroll}"/>
+                            
+                            <ScrollBar x:Name="PART_VerticalScrollBar"
+                                      Grid.Column="1" Grid.Row="0"
+                                      Orientation="Vertical"
+                                      Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                                      Value="{TemplateBinding VerticalOffset}"
+                                      Maximum="{TemplateBinding ScrollableHeight}"
+                                      ViewportSize="{TemplateBinding ViewportHeight}"
+                                      Style="{StaticResource FluentScrollBarStyle}"/>
+                            
+                            <ScrollBar x:Name="PART_HorizontalScrollBar"
+                                      Grid.Column="0" Grid.Row="1"
+                                      Orientation="Horizontal"
+                                      Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
+                                      Value="{TemplateBinding HorizontalOffset}"
+                                      Maximum="{TemplateBinding ScrollableWidth}"
+                                      ViewportSize="{TemplateBinding ViewportWidth}"
+                                      Style="{StaticResource FluentScrollBarStyle}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
-    <Border CornerRadius="10" Background="#CC222222" BorderBrush="#44FFFFFF" BorderThickness="1">
+    <Border CornerRadius="10" Background="{StaticResource FluentBackgroundBrush}" BorderBrush="#44FFFFFF" BorderThickness="1">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="15" ShadowDepth="2" Direction="315" Opacity="0.6" Color="#000000"/>
+            <DropShadowEffect BlurRadius="25" ShadowDepth="8" Direction="315" Opacity="0.8" Color="#000000"/>
         </Border.Effect>
         
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="30"/>
+                <RowDefinition Height="32"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Title Bar -->
+            <!-- Title Bar with Fluent Design -->
             <Grid Grid.Row="0" Background="#33000000" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0">
                     <TextBlock Text="Window Operator" Foreground="#FFFFFF" FontWeight="SemiBold" VerticalAlignment="Center"/>
                 </StackPanel>
                 
@@ -84,7 +125,7 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Main Content -->
+            <!-- Main Content with Fluent Design -->
             <Grid Grid.Row="1" Margin="20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -92,67 +133,76 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- App Settings -->
-                <StackPanel Grid.Row="0" Margin="0,0,0,15">
-                    <TextBlock Text="Application Settings" Foreground="#FFFFFF" FontWeight="Bold" Margin="0,0,0,10"/>
-                    
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+                <!-- App Settings with Fluent Design -->
+                <Border Grid.Row="0" Background="#15FFFFFF" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                    <StackPanel>
+                        <TextBlock Text="Application Settings" Foreground="#FFFFFF" FontWeight="Bold" Margin="0,0,0,12"/>
                         
-                        <CheckBox Grid.Row="0" Grid.Column="0" x:Name="chkSilentMode" Content="Silent Mode" 
-                                 Foreground="#FFFFFF" Margin="0,0,0,5" Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
-                        
-                        <CheckBox Grid.Row="1" Grid.Column="0" x:Name="chkRunAtStartup" Content="Run at Startup" 
-                                 Foreground="#FFFFFF" Margin="0,0,0,5" Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
-                        
-                        <CheckBox Grid.Row="2" Grid.Column="0" x:Name="chkRunAsAdmin" Content="Run as Administrator" 
-                                 Foreground="#FFFFFF" Margin="0,0,0,5" Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
-                        
-                        <CheckBox Grid.Row="3" Grid.Column="0" x:Name="chkKeepOriginalSize" Content="Keep Original Window Size" 
-                                 Foreground="#FFFFFF" Margin="0,0,0,5" Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
-                    </Grid>
-                </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <CheckBox Grid.Row="0" Grid.Column="0" x:Name="chkSilentMode" Content="Silent Mode" 
+                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8" 
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
+                            
+                            <CheckBox Grid.Row="1" Grid.Column="0" x:Name="chkRunAtStartup" Content="Run at Startup" 
+                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
+                            
+                            <CheckBox Grid.Row="2" Grid.Column="0" x:Name="chkRunAsAdmin" Content="Run as Administrator" 
+                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
+                            
+                            <CheckBox Grid.Row="3" Grid.Column="0" x:Name="chkKeepOriginalSize" Content="Keep Original Window Size" 
+                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,0"
+                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
 
-                <!-- Window Configurations -->
+                <!-- Window Configurations with Fluent Design -->
                 <Grid Grid.Row="1">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0" Margin="0,0,0,5">
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Window Configurations" Foreground="#FFFFFF" FontWeight="Bold" VerticalAlignment="Center"/>
                         <Button Grid.Column="1" x:Name="btnAddConfig" Content="Add New" Click="BtnAddConfig_Click" 
-                                Padding="8,3" Background="#3377FF" Foreground="White" BorderThickness="0">
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="4"/>
-                                </Style>
-                            </Button.Resources>
-                        </Button>
+                                Style="{StaticResource FluentAccentButtonStyle}" Padding="10,5"/>
                     </Grid>
                     
-                    <ListView Grid.Row="1" x:Name="lvWindowConfigs" Background="Transparent" BorderThickness="0"
-                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionChanged="LvWindowConfigs_SelectionChanged">
+                    <ListView Grid.Row="1" x:Name="lvWindowConfigs" 
+                              Style="{StaticResource FluentListViewStyle}"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                              SelectionChanged="LvWindowConfigs_SelectionChanged">
+                        <ListView.Template>
+                            <ControlTemplate TargetType="ListView">
+                                <ScrollViewer Style="{StaticResource FluentScrollViewerStyle}">
+                                    <ItemsPresenter/>
+                                </ScrollViewer>
+                            </ControlTemplate>
+                        </ListView.Template>
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                <Setter Property="Background" Value="#33000000"/>
-                                <Setter Property="Margin" Value="0,0,0,5"/>
-                                <Setter Property="Padding" Value="10"/>
+                                <Setter Property="Background" Value="#15FFFFFF"/>
+                                <Setter Property="Margin" Value="0,0,0,8"/>
+                                <Setter Property="Padding" Value="15"/>
                                 <Setter Property="BorderThickness" Value="0"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
@@ -160,21 +210,21 @@
                                             <Border Background="{TemplateBinding Background}" 
                                                     BorderBrush="{TemplateBinding BorderBrush}" 
                                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="5">
+                                                    CornerRadius="8">
                                                 <Grid>
                                                     <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
                                                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
                                                                       Margin="{TemplateBinding Padding}"/>
-                                                    <Border x:Name="SelectedBorder" BorderThickness="1" BorderBrush="#3377FF" CornerRadius="5" Visibility="Collapsed"/>
+                                                    <Border x:Name="SelectedBorder" BorderThickness="1" BorderBrush="{StaticResource FluentAccentBrush}" CornerRadius="8" Visibility="Collapsed"/>
                                                 </Grid>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="#44555555"/>
+                                                    <Setter Property="Background" Value="#25FFFFFF"/>
                                                     <Setter TargetName="SelectedBorder" Property="Visibility" Value="Visible"/>
                                                 </Trigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#44444444"/>
+                                                    <Setter Property="Background" Value="#20FFFFFF"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -193,15 +243,15 @@
                                       Tag="{Binding}"
                                       MouseLeftButtonDown="ConfigItem_MouseLeftButtonDown">
                                     <Grid.ContextMenu>
-                                        <ContextMenu>
-                                            <MenuItem Header="Restore to Last Saved Settings" Click="MenuRestoreConfig_Click" Tag="{Binding}"/>
-                                            <MenuItem Header="Clear Width and Height" Click="MenuClearWidthHeight_Click" Tag="{Binding}"/>
+                                        <ContextMenu Style="{StaticResource FluentContextMenuStyle}">
+                                            <MenuItem Header="Restore to Last Saved Settings" Click="MenuRestoreConfig_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
+                                            <MenuItem Header="Clear Width and Height" Click="MenuClearWidthHeight_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
                                             <Separator/>
-                                            <MenuItem Header="Open in Explorer" Click="MenuOpenInExplorer_Click" Tag="{Binding}"/>
-                                            <MenuItem Header="Open Application Directory" Click="MenuOpenAppDirectory_Click"/>
-                                            <MenuItem Header="Duplicate Configuration" Click="MenuDuplicateConfig_Click" Tag="{Binding}"/>
+                                            <MenuItem Header="Open in Explorer" Click="MenuOpenInExplorer_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
+                                            <MenuItem Header="Open Application Directory" Click="MenuOpenAppDirectory_Click" Style="{StaticResource FluentMenuItemStyle}"/>
+                                            <MenuItem Header="Duplicate Configuration" Click="MenuDuplicateConfig_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
                                             <Separator/>
-                                            <MenuItem Header="Remove Configuration" Click="BtnRemoveConfig_Click" Tag="{Binding}"/>
+                                            <MenuItem Header="Remove Configuration" Click="BtnRemoveConfig_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
                                         </ContextMenu>
                                     </Grid.ContextMenu>
                                     <Grid.RowDefinitions>
@@ -219,41 +269,25 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         
-                                        <CheckBox Grid.Column="0" x:Name="chkSelectConfig" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <CheckBox Grid.Column="0" x:Name="chkSelectConfig" Style="{StaticResource FluentCheckBoxStyle}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                         
                                         <TextBlock Grid.Column="1" Text="{Binding ExePath, StringFormat='Path: {0}'}" 
                                                    Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
                                         
                                         <StackPanel Grid.Column="2" Orientation="Horizontal">
                                             <Button x:Name="btnSelectWindow" Content="&#xEE57;" Click="BtnSelectWindow_Click" Tag="{Binding}"
-                                                    FontFamily="Segoe MDL2 Assets" Padding="5,0,5,0" Margin="0,0,5,0" ToolTip="Select Window">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="3"/>
-                                                    </Style>
-                                                </Button.Resources>
-                                            </Button>
+                                                    FontFamily="Segoe MDL2 Assets" Style="{StaticResource FluentButtonStyle}" 
+                                                    Padding="8,4" Margin="0,0,5,0" ToolTip="Select Window"/>
                                             <Button x:Name="btnEditPath" Content="✏" Click="BtnEditPath_Click" Tag="{Binding}"
-                                                    Padding="5" Margin="0,0,5,0" ToolTip="Edit Path">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="3"/>
-                                                    </Style>
-                                                </Button.Resources>
-                                            </Button>
+                                                    Style="{StaticResource FluentButtonStyle}" Padding="8,4" Margin="0,0,5,0" ToolTip="Edit Path"/>
                                             <Button x:Name="btnRunConfig" Content="▶" Click="BtnRunConfig_Click" Tag="{Binding}" 
-                                                    Padding="5" Margin="0,0,5,0" ToolTip="Run">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="3"/>
-                                                    </Style>
-                                                </Button.Resources>
-                                            </Button>
+                                                    Style="{StaticResource FluentAccentButtonStyle}" Padding="8,4" Margin="0,0,5,0" ToolTip="Run"/>
                                             <Button x:Name="btnRemoveConfig" Content="✕" Click="BtnRemoveConfig_Click" Tag="{Binding}"
-                                                    Padding="5" Background="#E53935" Foreground="White" BorderThickness="0" ToolTip="Remove">
+                                                    Padding="8,4" Background="#E53935" Foreground="White" BorderThickness="0" 
+                                                    ToolTip="Remove">
                                                 <Button.Resources>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="3"/>
+                                                        <Setter Property="CornerRadius" Value="4"/>
                                                     </Style>
                                                 </Button.Resources>
                                             </Button>
@@ -262,7 +296,7 @@
                                     
                                     <!-- Bound Window Section (Shows when window is bound) -->
                                     <Grid Grid.Row="1" Margin="0,10,0,0" Visibility="{Binding IsBound, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <Border Background="#33444444" BorderBrush="#44FFFFFF" BorderThickness="1" CornerRadius="4" Padding="8">
+                                        <Border Background="#25FFFFFF" BorderBrush="#44FFFFFF" BorderThickness="1" CornerRadius="6" Padding="12">
                                             <Grid>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="Auto"/>
@@ -270,35 +304,23 @@
                                                 </Grid.RowDefinitions>
                                                 
                                                 <TextBlock Grid.Row="0" Text="{Binding BoundWindowTitle, StringFormat='Bound to: {0}'}" 
-                                                           Foreground="#AAFFFFFF" FontSize="12" Margin="0,0,0,8"/>
+                                                           Foreground="#AAFFFFFF" FontSize="12" Margin="0,0,0,10"/>
                                                 
                                                 <StackPanel Grid.Row="1" Orientation="Horizontal">
                                                     <Button Content="Apply Size/Pos" Click="BtnApplyPosition_Click" Tag="{Binding}"
-                                                            Padding="8,3" Margin="0,0,8,0" Background="#3377FF" Foreground="White" 
-                                                            BorderThickness="0" FontSize="11">
-                                                        <Button.Resources>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="CornerRadius" Value="3"/>
-                                                            </Style>
-                                                        </Button.Resources>
-                                                    </Button>
+                                                            Style="{StaticResource FluentAccentButtonStyle}" Padding="10,4" Margin="0,0,8,0" 
+                                                            FontSize="11"/>
                                                     
                                                     <Button Content="Update Z-Order" Click="BtnUpdateZOrder_Click" Tag="{Binding}"
-                                                            Padding="8,3" Margin="0,0,8,0" Background="#3377FF" Foreground="White"
-                                                            BorderThickness="0" FontSize="11">
-                                                        <Button.Resources>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="CornerRadius" Value="3"/>
-                                                            </Style>
-                                                        </Button.Resources>
-                                                    </Button>
+                                                            Style="{StaticResource FluentAccentButtonStyle}" Padding="10,4" Margin="0,0,8,0"
+                                                            FontSize="11"/>
                                                     
                                                     <Button Content="Unbind" Click="BtnUnbindWindow_Click" Tag="{Binding}"
-                                                            Padding="8,3" Background="#E53935" Foreground="White"
+                                                            Padding="10,4" Background="#E53935" Foreground="White"
                                                             BorderThickness="0" FontSize="11">
                                                         <Button.Resources>
                                                             <Style TargetType="Border">
-                                                                <Setter Property="CornerRadius" Value="3"/>
+                                                                <Setter Property="CornerRadius" Value="4"/>
                                                             </Style>
                                                         </Button.Resources>
                                                     </Button>
@@ -314,7 +336,7 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         
-                                        <TextBlock Text="Edit Executable Path:" Foreground="#FFFFFF" Margin="0,0,0,5"/>
+                                        <TextBlock Text="Edit Executable Path:" Foreground="#FFFFFF" Margin="0,0,0,8"/>
                                         
                                         <Grid Grid.Row="1">
                                             <Grid.ColumnDefinitions>
@@ -330,20 +352,12 @@
                                             <Button Grid.Column="1" Content="Browse..." 
                                                     Click="BtnBrowseExePath_Click" 
                                                     Tag="{Binding}" 
-                                                    Padding="8,3" 
-                                                    Background="#3377FF" 
-                                                    Foreground="White"
-                                                    BorderThickness="0">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="3"/>
-                                                    </Style>
-                                                </Button.Resources>
-                                            </Button>
+                                                    Style="{StaticResource FluentAccentButtonStyle}"
+                                                    Padding="10,4"/>
                                         </Grid>
                                     </Grid>
                                     
-                                    <Grid Grid.Row="3" Margin="0,10,0,0">
+                                    <Grid Grid.Row="3" Margin="0,12,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -372,7 +386,7 @@
                                         </StackPanel>
                                     </Grid>
                                     
-                                    <Grid Grid.Row="4" Margin="0,10,0,0">
+                                    <Grid Grid.Row="4" Margin="0,12,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -381,16 +395,16 @@
                                         </Grid.ColumnDefinitions>
                                         
                                         <CheckBox Grid.Column="0" Content="Always on Top" IsChecked="{Binding EnableAlwaysOnTop}" 
-                                                 Foreground="#FFFFFF" Margin="0,0,15,0"/>
+                                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,15,0"/>
                                         
                                         <CheckBox Grid.Column="1" Content="Topmost" IsChecked="{Binding EnableAlwaysOnTopMost}" 
-                                                 Foreground="#FFFFFF" Margin="0,0,15,0"/>
+                                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,15,0"/>
                                         
                                         <CheckBox Grid.Column="2" Content="Always on Bottom" IsChecked="{Binding EnableAlwaysOnBottom}" 
-                                                 Foreground="#FFFFFF" Margin="0,0,15,0"/>
+                                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,15,0"/>
                                         
                                         <CheckBox Grid.Column="3" Content="Mouse Through" IsChecked="{Binding EnableMouseThrough}" 
-                                                 Foreground="#FFFFFF"/>
+                                                 Style="{StaticResource FluentCheckBoxStyle}"/>
                                     </Grid>
                                 </Grid>
                             </DataTemplate>
@@ -398,7 +412,7 @@
                     </ListView>
                 </Grid>
 
-                <!-- Action Buttons -->
+                <!-- Action Buttons with Fluent Design -->
                 <Grid Grid.Row="2" Margin="0,15,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -407,22 +421,16 @@
                     </Grid.ColumnDefinitions>
                     
                     <Button Grid.Column="1" x:Name="btnRunSelected" Content="Run Selected" Click="BtnRunSelected_Click" 
-                            Padding="12,6" Margin="0,0,10,0" Background="#4CAF50" Foreground="White" BorderThickness="0">
+                            Padding="15,8" Margin="0,0,10,0" Background="#4CAF50" Foreground="White" BorderThickness="0">
                         <Button.Resources>
                             <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="4"/>
+                                <Setter Property="CornerRadius" Value="6"/>
                             </Style>
                         </Button.Resources>
                     </Button>
                     
                     <Button Grid.Column="2" x:Name="btnSaveConfig" Content="Save Configuration" Click="BtnSaveConfig_Click" 
-                            Padding="12,6" Background="#3377FF" Foreground="White" BorderThickness="0">
-                        <Button.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="4"/>
-                            </Style>
-                        </Button.Resources>
-                    </Button>
+                            Style="{StaticResource FluentAccentButtonStyle}" Padding="15,8"/>
                 </Grid>
             </Grid>
         </Grid>

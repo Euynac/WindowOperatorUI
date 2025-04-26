@@ -849,32 +849,46 @@ namespace WindowOperatorUI
                     var draggedConfig = e.Data.GetData("WindowConfig") as WindowConfig;
                     if (draggedConfig != null && !ReferenceEquals(draggedConfig, targetConfig))
                     {
-                        var draggedIndex = _windowConfigs.IndexOf(draggedConfig);
-                        var targetIndex = _windowConfigs.IndexOf(targetConfig);
+                        int draggedIndex = _windowConfigs.IndexOf(draggedConfig);
+                        int targetIndex = _windowConfigs.IndexOf(targetConfig);
+                        
+                        // Debug diagnostic message
+                        NotificationService.ShowInfo($"Moving: {draggedIndex} -> {targetIndex}", 1);
                         
                         if (draggedIndex >= 0 && targetIndex >= 0)
                         {
-                            // Fix for issue #2: Properly handle reordering
-                            // Remove from the old position and insert at the new position
-                            _windowConfigs.RemoveAt(draggedIndex);
-                            
-                            // If the target was after the dragged item, its index decreased by 1
-                            if (targetIndex > draggedIndex)
+                            // Ensure we have a valid drag operation
+                            if (draggedIndex != targetIndex)
                             {
-                                targetIndex--;
+                                // Take a snapshot of both indices before any modifications
+                                int originalDraggedIndex = draggedIndex;
+                                int originalTargetIndex = targetIndex;
+                                
+                                // Remove first, which changes indexing
+                                _windowConfigs.RemoveAt(draggedIndex);
+                                
+                                // Target index needs adjustment if it was after the dragged item
+                                if (originalTargetIndex > originalDraggedIndex)
+                                {
+                                    targetIndex = originalTargetIndex - 1;
+                                }
+                                else
+                                {
+                                    targetIndex = originalTargetIndex;
+                                }
+                                
+                                // Insert at the target position
+                                _windowConfigs.Insert(targetIndex, draggedConfig);
+                                
+                                // Update all configuration order numbers
+                                UpdateConfigurationOrder();
+                                
+                                // Refresh the ListView to update the UI
+                                lvWindowConfigs.Items.Refresh();
+                                
+                                // Select the moved item
+                                lvWindowConfigs.SelectedItem = draggedConfig;
                             }
-                            
-                            // Insert at the target position
-                            _windowConfigs.Insert(targetIndex, draggedConfig);
-                            
-                            // Update all configuration order numbers
-                            UpdateConfigurationOrder();
-                            
-                            // Refresh the ListView to update the UI
-                            lvWindowConfigs.Items.Refresh();
-                            
-                            // Select the moved item
-                            lvWindowConfigs.SelectedItem = draggedConfig;
                         }
                     }
                 }
@@ -924,27 +938,32 @@ namespace WindowOperatorUI
 
             // Get the window config from the Tag property
             WindowConfig config = null;
+            ListViewItem listViewItem = null;
             
-            if (sender is FrameworkElement element)
+            if (sender is ListViewItem item)
+            {
+                listViewItem = item;
+                config = item.Content as WindowConfig;
+            }
+            else if (sender is FrameworkElement element)
             {
                 config = element.Tag as WindowConfig;
-            }
-            
-            if (config == null && sender is ListViewItem listViewItem)
-            {
-                config = listViewItem.Content as WindowConfig;
-                
-                // Select the ListViewItem when clicked - fix for issue #1
-                listViewItem.IsSelected = true;
+                listViewItem = FindVisualParent<ListViewItem>(element);
             }
             
             if (config != null)
             {
+                // Select the item in UI
+                if (listViewItem != null)
+                {
+                    listViewItem.IsSelected = true;
+                }
+                
                 // Store the dragged item and select it in the list view
                 _draggedItem = config;
                 lvWindowConfigs.SelectedItem = config;
                 
-                // Handle left button mouse down as potential drag start
+                // Start the drag operation
                 var dragData = new DataObject("WindowConfig", config);
                 DragDrop.DoDragDrop(sender as DependencyObject, dragData, DragDropEffects.Move);
                 

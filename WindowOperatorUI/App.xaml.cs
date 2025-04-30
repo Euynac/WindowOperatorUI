@@ -67,8 +67,8 @@ namespace WindowOperatorUI
             {
                 // 这种情况下可能是用户手动以管理员身份启动的
                 // 不强制降权，允许程序继续运行
-                MessageBox.Show("当前以管理员身份运行，但配置中未启用此选项。\n如需以普通用户身份运行，请关闭程序后手动以普通权限重启。", 
-                    "权限提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Currently running with administrator privileges, but this option is not enabled in the configuration.\nTo run as a regular user, please close the program and restart manually with normal privileges.", 
+                    "Permission Notice", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
             // MainWindow将通过StartupUri在XAML中创建

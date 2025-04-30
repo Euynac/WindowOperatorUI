@@ -13,6 +13,7 @@
         Background="Transparent"
         ResizeMode="CanResizeWithGrip"
         Style="{StaticResource WindowShadowStyle}"
+        Icon="/Assets/icon.ico"
         SizeChanged="Window_SizeChanged">
     
     <Window.Resources>
@@ -137,6 +138,7 @@
             <!-- Title Bar with Fluent Design -->
             <Grid Grid.Row="0" Background="#33000000" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <Image Source="/Assets/icon.ico" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
                     <TextBlock Text="Window Operator" Foreground="#FFFFFF" FontWeight="SemiBold" VerticalAlignment="Center"/>
                 </StackPanel>
                 

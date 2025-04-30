@@ -6,7 +6,7 @@
     <Application.Resources>
         <!-- Fluent Design Colors -->
         <Color x:Key="FluentAccentColor">#0078D7</Color>
-        <Color x:Key="FluentBackgroundColor">#202020</Color>
+        <Color x:Key="FluentBackgroundColor">#121212</Color>
         <Color x:Key="FluentBackgroundLighterColor">#2D2D2D</Color>
         <Color x:Key="FluentForegroundColor">#FFFFFF</Color>
         <Color x:Key="FluentBorderColor">#484848</Color>

@@ -121,7 +121,7 @@
         <Grid.Effect>
             <DropShadowEffect ShadowDepth="0" BlurRadius="10" Opacity="0.8" Color="Black"/>
         </Grid.Effect>
-        <Border x:Name="MainBorder" Background="{StaticResource FluentBackgroundBrush}" BorderBrush="Transparent" BorderThickness="0" MouseMove="MainBorder_MouseMove" MouseDown="MainBorder_MouseDown" >
+        <Border x:Name="MainBorder" Background="{StaticResource FluentBackgroundBrush}" BorderBrush="DimGray" BorderThickness="0.5" MouseMove="MainBorder_MouseMove" MouseDown="MainBorder_MouseDown" >
             <Border.Resources>
                 <Storyboard x:Key="ShowResizeCursor">
                     <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Cursor" Duration="0:0:0.1">

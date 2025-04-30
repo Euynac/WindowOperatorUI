@@ -14,10 +14,14 @@
     <a href="#contributing">Contributing</a> •
     <a href="#license">License</a>
   </p>
-  ![.NET 8.0](https://img.shields.io/badge/.NET-8.0-blue)
-  ![WPF](https://img.shields.io/badge/UI-WPF-brightgreen)
-  ![License](https://img.shields.io/badge/license-MIT-green)
-  [![GitHub Stars](https://img.shields.io/github/stars/username/WindowOperatorUI?style=social)](https://github.com/username/WindowOperatorUI)
+  <p>
+    <a href="https://dotnet.microsoft.com/download/dotnet/8.0"><img src="https://img.shields.io/badge/.NET-8.0-blue" alt=".NET 8.0"></a>
+    <a href="https://github.com/dotnet/wpf"><img src="https://img.shields.io/badge/UI-WPF-brightgreen" alt="WPF"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+    <a href="https://github.com/Euynac/WindowOperatorUI/releases"><img src="https://img.shields.io/github/v/release/Euynac/WindowOperatorUI" alt="Release"></a>
+    <a href="https://github.com/Euynac/WindowOperatorUI/issues"><img src="https://img.shields.io/github/issues/Euynac/WindowOperatorUI" alt="Issues"></a>
+    <a href="https://github.com/Euynac/WindowOperatorUI/stargazers"><img src="https://img.shields.io/github/stars/Euynac/WindowOperatorUI?style=social" alt="GitHub Stars"></a>
+  </p>
 </div>
 
 ## Introduction
@@ -43,15 +47,16 @@ WindowOperatorUI is an advanced window management utility designed for Windows s
 ### System Requirements
 
 - Windows 10/11
-- .NET 8.0 Desktop Runtime [Download .NET 8.0 (Linux, macOS, and Windows) | .NET](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+- .NET 8.0 Desktop Runtime [Download .NET 8.0 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 
 ### Download Options
 
-- **[Download Latest Release](https://github.com/username/WindowOperatorUI/releases/latest)**
+- **[Download Latest Release](https://github.com/Euynac/WindowOperatorUI/releases/latest)** - Get the pre-built executable
+- **[View on GitHub](https://github.com/Euynac/WindowOperatorUI)** - Star the repository if you find it useful!
 - Or build from source:
 
 ```bash
-git clone https://github.com/username/WindowOperatorUI.git
+git clone https://github.com/Euynac/WindowOperatorUI.git
 cd WindowOperatorUI
 dotnet build --configuration Release
 ```
@@ -106,6 +111,16 @@ dotnet build --configuration Release
 - Window grouping and layout presets
 - Scripting/automation support
 
+## Feedback and Issues
+
+Found a bug or have a feature request? We'd love to hear from you!
+
+- **[Submit an issue](https://github.com/Euynac/WindowOperatorUI/issues/new)** for bugs, feature requests, or suggestions
+- **[View existing issues](https://github.com/Euynac/WindowOperatorUI/issues)** to see if your concern has already been reported
+- For questions or discussions, use the **[Discussions](https://github.com/Euynac/WindowOperatorUI/discussions)** tab
+
+Your feedback helps make this project better for everyone!
+
 ## Contributing
 
 Contributions are welcome! Here's how you can help:
@@ -115,6 +130,8 @@ Contributions are welcome! Here's how you can help:
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+Check the [open issues](https://github.com/Euynac/WindowOperatorUI/issues) for ways to contribute or suggest new features.
 
 Please read our [Contributing Guidelines](CONTRIBUTING.md) for more details.
 
@@ -126,9 +143,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Icons from [Segoe MDL2 Assets](https://docs.microsoft.com/en-us/windows/apps/design/style/segoe-ui-symbol-font)
 - Built with [WPF](https://github.com/dotnet/wpf) and [.NET 8.0](https://dotnet.microsoft.com/download/dotnet/8.0)
+- Special thanks to all [contributors](https://github.com/Euynac/WindowOperatorUI/graphs/contributors)
 
 ---
 
 <div align="center">
-  <sub>Built with ❤️ by Momean</sub>
+  <sub>Built with ❤️ by <a href="https://github.com/Euynac">Momean</a></sub>
 </div> 

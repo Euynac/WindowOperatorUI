@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using WindowOperatorUI.Controls;
 using WindowOperatorUI.Models;
 using WindowOperatorUI.Services;
@@ -95,9 +96,30 @@ namespace WindowOperatorUI
             // Set initial button visual state
             if (btnSettings != null)
             {
-                btnSettings.Background = _isSettingsPanelVisible ? 
-                    new SolidColorBrush(Color.FromArgb(80, 255, 255, 255)) : 
-                    new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+                if (_isSettingsPanelVisible)
+                {
+                    // Apply highlight effect when active
+                    btnSettings.Background = new SolidColorBrush(Color.FromArgb(100, 100, 150, 255));
+                    btnSettings.Foreground = new SolidColorBrush(Colors.White);
+                    
+                    // Add drop shadow effect
+                    DropShadowEffect shadowEffect = new DropShadowEffect
+                    {
+                        Color = Colors.LightBlue,
+                        Direction = 0,
+                        ShadowDepth = 0,
+                        BlurRadius = 10,
+                        Opacity = 0.7
+                    };
+                    btnSettings.Effect = shadowEffect;
+                }
+                else
+                {
+                    // Reset to default style when inactive
+                    btnSettings.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+                    btnSettings.Foreground = new SolidColorBrush(Colors.White);
+                    btnSettings.Effect = null;
+                }
             }
         }
 
@@ -812,14 +834,29 @@ namespace WindowOperatorUI
                 Button settingsButton = sender as Button;
                 if (settingsButton != null)
                 {
-                    // Apply a temporary background to show the button was clicked
                     if (_isSettingsPanelVisible)
                     {
-                        settingsButton.Background = new SolidColorBrush(Color.FromArgb(80, 255, 255, 255));
+                        // Apply highlight effect when active
+                        settingsButton.Background = new SolidColorBrush(Color.FromArgb(100, 100, 150, 255));
+                        settingsButton.Foreground = new SolidColorBrush(Colors.White);
+                        
+                        // Add drop shadow effect
+                        DropShadowEffect shadowEffect = new DropShadowEffect
+                        {
+                            Color = Colors.LightBlue,
+                            Direction = 0,
+                            ShadowDepth = 0,
+                            BlurRadius = 10,
+                            Opacity = 0.7
+                        };
+                        settingsButton.Effect = shadowEffect;
                     }
                     else
                     {
+                        // Reset to default style when inactive
                         settingsButton.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+                        settingsButton.Foreground = new SolidColorBrush(Colors.White);
+                        settingsButton.Effect = null;
                     }
                 }
             }

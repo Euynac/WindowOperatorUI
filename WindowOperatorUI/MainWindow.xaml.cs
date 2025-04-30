@@ -40,6 +40,9 @@ namespace WindowOperatorUI
         private Point _dragStartPoint;
         private bool _isDragging = false;
         
+        // Added for settings panel visibility toggle
+        private bool _isSettingsPanelVisible = false;
+        
         // Process monitoring timer
         private System.Windows.Threading.DispatcherTimer _processMonitoringTimer;
         private Dictionary<int, DateTime> _processLastCheckTime = new Dictionary<int, DateTime>();
@@ -79,6 +82,23 @@ namespace WindowOperatorUI
         {
             // Apply acrylic effect to window with dark tint
             WindowBackdrop.ApplyAcrylicEffect(this, 0x99202020);
+            
+            // Set initial maximize button icon
+            btnMaximize.Content = WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
+            
+            // Ensure settings panel visibility matches our flag
+            if (SettingsPanel != null)
+            {
+                SettingsPanel.Visibility = _isSettingsPanelVisible ? Visibility.Visible : Visibility.Collapsed;
+            }
+            
+            // Set initial button visual state
+            if (btnSettings != null)
+            {
+                btnSettings.Background = _isSettingsPanelVisible ? 
+                    new SolidColorBrush(Color.FromArgb(80, 255, 255, 255)) : 
+                    new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+            }
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -757,9 +777,52 @@ namespace WindowOperatorUI
             DragMove();
         }
 
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            // Update maximize button icon when window state changes
+            if (btnMaximize != null)
+            {
+                btnMaximize.Content = WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
+            }
+        }
+
         private void BtnMinimize_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;
+        }
+
+        private void BtnMaximize_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            
+            // Update icon based on window state
+            btnMaximize.Content = WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
+        }
+
+        private void BtnSettings_Click(object sender, RoutedEventArgs e)
+        {
+            _isSettingsPanelVisible = !_isSettingsPanelVisible;
+            
+            // Update the settings panel visibility
+            if (SettingsPanel != null)
+            {
+                SettingsPanel.Visibility = _isSettingsPanelVisible ? Visibility.Visible : Visibility.Collapsed;
+                
+                // Add visual feedback
+                Button settingsButton = sender as Button;
+                if (settingsButton != null)
+                {
+                    // Apply a temporary background to show the button was clicked
+                    if (_isSettingsPanelVisible)
+                    {
+                        settingsButton.Background = new SolidColorBrush(Color.FromArgb(80, 255, 255, 255));
+                    }
+                    else
+                    {
+                        settingsButton.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+                    }
+                }
+            }
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)
@@ -1641,5 +1704,147 @@ namespace WindowOperatorUI
         }
         
         #endregion
+
+        private void MainBorder_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (WindowState == WindowState.Maximized)
+                return;
+                
+            // Get the border
+            Border border = sender as Border;
+            
+            // Get mouse position relative to the window
+            Point position = e.GetPosition(border);
+            
+            // Get window dimensions
+            double width = border.ActualWidth;
+            double height = border.ActualHeight;
+            
+            // Define edge detection margin
+            double edgeSize = 10;
+            
+            // Check if mouse is near the right or bottom edge or in the right-bottom corner
+            bool nearRightEdge = position.X > width - edgeSize;
+            bool nearBottomEdge = position.Y > height - edgeSize;
+            
+            if (nearRightEdge && nearBottomEdge)
+            {
+                // Corner resize
+                border.Cursor = Cursors.SizeNWSE;
+            }
+            else if (nearRightEdge)
+            {
+                // Right edge resize
+                border.Cursor = Cursors.SizeWE;
+            }
+            else if (nearBottomEdge)
+            {
+                // Bottom edge resize
+                border.Cursor = Cursors.SizeNS;
+            }
+            else
+            {
+                // Reset cursor
+                border.Cursor = Cursors.Arrow;
+            }
+        }
+
+        private void MainBorder_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (WindowState == WindowState.Maximized)
+                return;
+                
+            // Get the border
+            Border border = sender as Border;
+            
+            // Only process if left button was clicked
+            if (e.ChangedButton != MouseButton.Left)
+                return;
+                
+            // Get mouse position relative to the window
+            Point position = e.GetPosition(border);
+            
+            // Get window dimensions
+            double width = border.ActualWidth;
+            double height = border.ActualHeight;
+            
+            // Define edge detection margin
+            double edgeSize = 10;
+            
+            // Check if mouse is near the right or bottom edge or in the right-bottom corner
+            bool nearRightEdge = position.X > width - edgeSize;
+            bool nearBottomEdge = position.Y > height - edgeSize;
+            
+            // If near an edge, initiate window resize
+            if (nearRightEdge || nearBottomEdge)
+            {
+                if (nearRightEdge && nearBottomEdge)
+                {
+                    // Resize from bottom-right corner
+                    ResizeWindow(ResizeDirection.BottomRight);
+                }
+                else if (nearRightEdge)
+                {
+                    // Resize from right edge
+                    ResizeWindow(ResizeDirection.Right);
+                }
+                else if (nearBottomEdge)
+                {
+                    // Resize from bottom edge
+                    ResizeWindow(ResizeDirection.Bottom);
+                }
+                
+                e.Handled = true;
+            }
+        }
+        
+        private enum ResizeDirection
+        {
+            Left,
+            Right,
+            Top,
+            Bottom,
+            TopLeft,
+            TopRight,
+            BottomLeft,
+            BottomRight
+        }
+        
+        private void ResizeWindow(ResizeDirection direction)
+        {
+            IntPtr windowHandle = new WindowInteropHelper(this).Handle;
+            SendMessage(windowHandle, WM_SYSCOMMAND, (IntPtr)(SC_SIZE + GetDirectionValue(direction)), IntPtr.Zero);
+        }
+        
+        private int GetDirectionValue(ResizeDirection direction)
+        {
+            switch (direction)
+            {
+                case ResizeDirection.Left: return WMSZ_LEFT;
+                case ResizeDirection.Right: return WMSZ_RIGHT;
+                case ResizeDirection.Top: return WMSZ_TOP;
+                case ResizeDirection.Bottom: return WMSZ_BOTTOM;
+                case ResizeDirection.TopLeft: return WMSZ_TOPLEFT;
+                case ResizeDirection.TopRight: return WMSZ_TOPRIGHT;
+                case ResizeDirection.BottomLeft: return WMSZ_BOTTOMLEFT;
+                case ResizeDirection.BottomRight: return WMSZ_BOTTOMRIGHT;
+                default: return WMSZ_BOTTOMRIGHT;
+            }
+        }
+        
+        // Constants for window resizing
+        private const int WM_SYSCOMMAND = 0x0112;
+        private const int SC_SIZE = 0xF000;
+        private const int WMSZ_LEFT = 1;
+        private const int WMSZ_RIGHT = 2;
+        private const int WMSZ_TOP = 3;
+        private const int WMSZ_TOPLEFT = 4;
+        private const int WMSZ_TOPRIGHT = 5;
+        private const int WMSZ_BOTTOM = 6;
+        private const int WMSZ_BOTTOMLEFT = 7;
+        private const int WMSZ_BOTTOMRIGHT = 8;
+        
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
     }
 }

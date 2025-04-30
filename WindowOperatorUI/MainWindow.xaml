@@ -12,7 +12,8 @@
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="CanResizeWithGrip"
-        Style="{StaticResource WindowShadowStyle}">
+        Style="{StaticResource WindowShadowStyle}"
+        SizeChanged="Window_SizeChanged">
     
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -105,7 +106,20 @@
         </Style>
     </Window.Resources>
 
-    <Border Background="{StaticResource FluentBackgroundBrush}" BorderBrush="Transparent" BorderThickness="0">
+    <Border x:Name="MainBorder" Background="{StaticResource FluentBackgroundBrush}" BorderBrush="Transparent" BorderThickness="0" MouseMove="MainBorder_MouseMove" MouseDown="MainBorder_MouseDown">
+        <Border.Resources>
+            <Storyboard x:Key="ShowResizeCursor">
+                <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Cursor" Duration="0:0:0.1">
+                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Cursors.SizeNWSE}"/>
+                </ObjectAnimationUsingKeyFrames>
+            </Storyboard>
+            <Storyboard x:Key="ResetCursor">
+                <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Cursor" Duration="0:0:0.1">
+                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Cursors.Arrow}"/>
+                </ObjectAnimationUsingKeyFrames>
+            </Storyboard>
+        </Border.Resources>
+        
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="32"/>
@@ -119,13 +133,15 @@
                 </StackPanel>
                 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="btnSettings" Content="&#xE713;" Style="{StaticResource WindowButtonStyle}" Click="BtnSettings_Click" ToolTip="Toggle Settings Panel"/>
                     <Button x:Name="btnMinimize" Content="&#xE921;" Style="{StaticResource WindowButtonStyle}" Click="BtnMinimize_Click"/>
+                    <Button x:Name="btnMaximize" Content="&#xE922;" Style="{StaticResource WindowButtonStyle}" Click="BtnMaximize_Click"/>
                     <Button x:Name="btnClose" Content="&#xE8BB;" Style="{StaticResource WindowButtonStyle}" Click="BtnClose_Click"/>
                 </StackPanel>
             </Grid>
 
             <!-- Main Content with Fluent Design -->
-            <Grid Grid.Row="1" Margin="20">
+            <Grid Grid.Row="1" Margin="20" x:Name="MainContentGrid">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -133,7 +149,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- App Settings with Fluent Design -->
-                <Border Grid.Row="0" Background="#15FFFFFF" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                <Border Grid.Row="0" Background="#15FFFFFF" CornerRadius="8" Padding="15" Margin="0,0,0,15" Visibility="Collapsed" x:Name="SettingsPanel">
                     <StackPanel>
                         <TextBlock Text="Application Settings" Foreground="#FFFFFF" FontWeight="Bold" Margin="0,0,0,12"/>
                         
@@ -557,6 +573,18 @@
                             Style="{StaticResource FluentAccentButtonStyle}" Padding="15,8"/>
                 </Grid>
             </Grid>
+            
+            <!-- Resize Grip in bottom-right corner -->
+            <ResizeGrip x:Name="ResizeCorner" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                        Opacity="0.6" Margin="0,0,0,0" Cursor="SizeNWSE">
+                <ResizeGrip.Template>
+                    <ControlTemplate TargetType="ResizeGrip">
+                        <Grid Width="16" Height="16">
+                            <Path Data="M 0,16 L 16,0 16,16 Z" Fill="#55FFFFFF" />
+                        </Grid>
+                    </ControlTemplate>
+                </ResizeGrip.Template>
+            </ResizeGrip>
         </Grid>
     </Border>
 </Window>

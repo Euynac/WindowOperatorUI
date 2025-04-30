@@ -14,7 +14,6 @@
     <a href="#contributing">Contributing</a> •
     <a href="#license">License</a>
   </p>
-  
   ![.NET 8.0](https://img.shields.io/badge/.NET-8.0-blue)
   ![WPF](https://img.shields.io/badge/UI-WPF-brightgreen)
   ![License](https://img.shields.io/badge/license-MIT-green)
@@ -44,7 +43,7 @@ WindowOperatorUI is an advanced window management utility designed for Windows s
 ### System Requirements
 
 - Windows 10/11
-- .NET 8.0 Runtime
+- .NET 8.0 Desktop Runtime [Download .NET 8.0 (Linux, macOS, and Windows) | .NET](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 
 ### Download Options
 
@@ -95,7 +94,7 @@ dotnet build --configuration Release
 <div align="center">
   <img src="docs/images/main-screen.png" alt="Main Interface" width="80%"/>
   <p><em>Main application interface</em></p>
-  
+
   <img src="docs/images/window-selection.png" alt="Window Selection" width="80%"/>
   <p><em>Window selection with crosshair tool</em></p>
 </div>
@@ -131,5 +130,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-  <sub>Built with ❤️ by [Your Name/Team]</sub>
+  <sub>Built with ❤️ by Momean</sub>
 </div> 

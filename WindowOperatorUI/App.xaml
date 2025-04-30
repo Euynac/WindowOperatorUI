@@ -315,33 +315,5 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- Window Shadow Style -->
-        <Style x:Key="WindowShadowStyle" TargetType="{x:Type Window}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type Window}">
-                        <Grid Margin="30">
-                            <Border CornerRadius="10">
-                                <Border.Background>
-                                    <SolidColorBrush Color="Black" Opacity="1"/>
-                                </Border.Background>
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="25" ShadowDepth="4" Color="Black" />
-                                </Border.Effect>
-                            </Border>
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    Padding="{TemplateBinding Margin}"
-                                    SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
-                                    CornerRadius="5">
-                                <ContentPresenter />
-                            </Border>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Application.Resources>
 </Application>

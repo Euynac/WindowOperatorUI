@@ -9,10 +9,8 @@
         mc:Ignorable="d"
         Title="Window Operator" Height="650" Width="900"
         WindowStyle="None" 
-        AllowsTransparency="True"
         Background="Transparent"
-        ResizeMode="CanResizeWithGrip"
-        Style="{StaticResource WindowShadowStyle}"
+        ResizeMode="NoResize"
         Icon="/Assets/icon.ico"
         SizeChanged="Window_SizeChanged">
     
@@ -115,486 +113,495 @@
         </Style>
     </Window.Resources>
 
-    <Border x:Name="MainBorder" Background="{StaticResource FluentBackgroundBrush}" BorderBrush="Transparent" BorderThickness="0" MouseMove="MainBorder_MouseMove" MouseDown="MainBorder_MouseDown">
-        <Border.Resources>
-            <Storyboard x:Key="ShowResizeCursor">
-                <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Cursor" Duration="0:0:0.1">
-                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Cursors.SizeNWSE}"/>
-                </ObjectAnimationUsingKeyFrames>
-            </Storyboard>
-            <Storyboard x:Key="ResetCursor">
-                <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Cursor" Duration="0:0:0.1">
-                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Cursors.Arrow}"/>
-                </ObjectAnimationUsingKeyFrames>
-            </Storyboard>
-        </Border.Resources>
-        
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="32"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+    <WindowChrome.WindowChrome>
+        <WindowChrome GlassFrameThickness="-1"   CaptionHeight="0"   />
+    </WindowChrome.WindowChrome>
+    <Grid Margin="5" Background="White">
+        <Grid.Effect>
+            <DropShadowEffect ShadowDepth="0" BlurRadius="10" Opacity="0.8" Color="#AAAAAA"/>
+        </Grid.Effect>
+        <Border x:Name="MainBorder" Background="{StaticResource FluentBackgroundBrush}" BorderBrush="Transparent" BorderThickness="0" MouseMove="MainBorder_MouseMove" MouseDown="MainBorder_MouseDown">
+            <Border.Resources>
+                <Storyboard x:Key="ShowResizeCursor">
+                    <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Cursor" Duration="0:0:0.1">
+                        <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Cursors.SizeNWSE}"/>
+                    </ObjectAnimationUsingKeyFrames>
+                </Storyboard>
+                <Storyboard x:Key="ResetCursor">
+                    <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Cursor" Duration="0:0:0.1">
+                        <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Cursors.Arrow}"/>
+                    </ObjectAnimationUsingKeyFrames>
+                </Storyboard>
+            </Border.Resources>
 
-            <!-- Title Bar with Fluent Design -->
-            <Grid Grid.Row="0" Background="#33000000" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0">
-                    <Image Source="/Assets/icon.ico" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="Window Operator" Foreground="#FFFFFF" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                </StackPanel>
-                
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button x:Name="btnSettings" Content="&#xE713;" Style="{StaticResource WindowButtonStyle}" Click="BtnSettings_Click" ToolTip="Toggle Settings Panel"/>
-                    <Button x:Name="btnMinimize" Content="&#xE921;" Style="{StaticResource WindowButtonStyle}" Click="BtnMinimize_Click"/>
-                    <Button x:Name="btnMaximize" Content="&#xE922;" Style="{StaticResource WindowButtonStyle}" Click="BtnMaximize_Click"/>
-                    <Button x:Name="btnClose" Content="&#xE8BB;" Style="{StaticResource WindowButtonStyle}" Click="BtnClose_Click"/>
-                </StackPanel>
-            </Grid>
-
-            <!-- Main Content with Fluent Design -->
-            <Grid Grid.Row="1" Margin="20" x:Name="MainContentGrid">
+            <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="32"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- App Settings with Fluent Design -->
-                <Border Grid.Row="0" Background="#15FFFFFF" CornerRadius="8" Padding="15" Margin="0,0,0,15" Visibility="Collapsed" x:Name="SettingsPanel">
-                    <StackPanel>
-                        <TextBlock Text="Application Settings" Foreground="#FFFFFF" FontWeight="Bold" Margin="0,0,0,12"/>
-                        
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            
-                            <!-- Silent Mode checkbox is hidden from UI but kept in code -->
-                            <CheckBox Grid.Row="0" Grid.Column="0" x:Name="chkSilentMode" Content="Silent Mode" 
-                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8" 
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"
-                                     Visibility="Collapsed">
-                                <CheckBox.ToolTip>
-                                    <TextBlock Text="Disable notification sounds and minimize visual notifications" TextWrapping="Wrap" MaxWidth="250"/>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
-                            
-                            <CheckBox Grid.Row="0" Grid.Column="0" x:Name="chkRunAtStartup" Content="Run at Startup" 
-                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
-                                <CheckBox.ToolTip>
-                                    <TextBlock Text="Launch application automatically when Windows starts" TextWrapping="Wrap" MaxWidth="250"/>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
-                            
-                            <CheckBox Grid.Row="1" Grid.Column="0" x:Name="chkRunAsAdmin" Content="Run as Administrator" 
-                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
-                                <CheckBox.ToolTip>
-                                    <TextBlock Text="Run with elevated privileges to control applications that require administrator access" TextWrapping="Wrap" MaxWidth="250"/>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
-                            
-                            <CheckBox Grid.Row="2" Grid.Column="0" x:Name="chkKeepOriginalSize" Content="Keep Original Window Size" 
-                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
-                                <CheckBox.ToolTip>
-                                    <TextBlock Text="Maintain the original size of windows when positioning them" TextWrapping="Wrap" MaxWidth="250"/>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
-                            
-                            <CheckBox Grid.Row="3" Grid.Column="0" x:Name="chkConfirmProcessKill" Content="Confirm Before Killing Process" 
-                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
-                                <CheckBox.ToolTip>
-                                    <TextBlock Text="Show confirmation dialog before terminating a process" TextWrapping="Wrap" MaxWidth="250"/>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
-                            
-                            <CheckBox Grid.Row="4" Grid.Column="0" x:Name="chkBindToProcessWhenSelectingWindow" Content="Bind to Process When Selecting Window" 
-                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
-                                <CheckBox.ToolTip>
-                                    <TextBlock Text="Automatically bind to process when using the Select Window feature" TextWrapping="Wrap" MaxWidth="250"/>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
-                            
-                            <CheckBox Grid.Row="5" Grid.Column="0" x:Name="chkShowBoundProcessDetails" Content="Show Bound Process Details" 
-                                     Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,0"
-                                     Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
-                                <CheckBox.ToolTip>
-                                    <TextBlock Text="Display real-time information about bound processes (size, position, CPU, memory)" TextWrapping="Wrap" MaxWidth="250"/>
-                                </CheckBox.ToolTip>
-                            </CheckBox>
-                        </Grid>
+                <!-- Title Bar with Fluent Design -->
+                <Grid Grid.Row="0" Background="#33000000" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <Image Source="/Assets/icon.ico" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Window Operator" Foreground="#FFFFFF" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
-                </Border>
 
-                <!-- Window Configurations with Fluent Design -->
-                <Grid Grid.Row="1">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="btnSettings" Content="&#xE713;" Style="{StaticResource WindowButtonStyle}" Click="BtnSettings_Click" ToolTip="Toggle Settings Panel"/>
+                        <Button x:Name="btnMinimize" Content="&#xE921;" Style="{StaticResource WindowButtonStyle}" Click="BtnMinimize_Click"/>
+                        <Button x:Name="btnMaximize" Content="&#xE922;" Style="{StaticResource WindowButtonStyle}" Click="BtnMaximize_Click"/>
+                        <Button x:Name="btnClose" Content="&#xE8BB;" Style="{StaticResource WindowButtonStyle}" Click="BtnClose_Click"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Main Content with Fluent Design -->
+                <Grid Grid.Row="1" Margin="20" x:Name="MainContentGrid">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0" Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Window Configurations" Foreground="#FFFFFF" FontWeight="Bold" VerticalAlignment="Center"/>
-                        <Button Grid.Column="1" x:Name="btnAddConfig" Content="Add New" Click="BtnAddConfig_Click" 
-                                Style="{StaticResource FluentAccentButtonStyle}" Padding="10,5"/>
-                    </Grid>
-                    
-                    <ListView Grid.Row="1" x:Name="lvWindowConfigs" 
-                              Style="{StaticResource FluentListViewStyle}"
-                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
-                              SelectionChanged="LvWindowConfigs_SelectionChanged"
-                              Margin="0,0,0,0"
-                              Padding="0,2,0,2">
-                        <ListView.Template>
-                            <ControlTemplate TargetType="ListView">
-                                <ScrollViewer Style="{StaticResource FluentScrollViewerStyle}">
-                                    <ItemsPresenter/>
-                                </ScrollViewer>
-                            </ControlTemplate>
-                        </ListView.Template>
-                        <ListView.ItemContainerStyle>
-                            <Style TargetType="ListViewItem">
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                <Setter Property="Background" Value="#15FFFFFF"/>
-                                <Setter Property="Margin" Value="0,0,0,10"/>
-                                <Setter Property="Padding" Value="16"/>
-                                <Setter Property="BorderThickness" Value="0"/>
-                                <Setter Property="AllowDrop" Value="True"/>
-                                <Setter Property="IsTabStop" Value="True"/>
-                                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                                <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ConfigItem_MouseLeftButtonDown"/>
-                                <EventSetter Event="Drop" Handler="ConfigItem_Drop"/>
-                                <EventSetter Event="DragEnter" Handler="ConfigItem_DragEnter"/>
-                                <EventSetter Event="DragLeave" Handler="ConfigItem_DragLeave"/>
-                                <EventSetter Event="DragOver" Handler="ConfigItem_DragOver"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="ListViewItem">
-                                            <Border x:Name="ItemBorder"
-                                                    Background="{TemplateBinding Background}" 
-                                                    BorderBrush="{TemplateBinding BorderBrush}" 
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="8"
-                                                    Tag="{Binding}">
-                                                <Grid>
-                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
-                                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
-                                                                      Margin="{TemplateBinding Padding}"/>
-                                                    <Border x:Name="SelectedBorder" BorderThickness="1" BorderBrush="{StaticResource FluentAccentBrush}" CornerRadius="8" Visibility="Collapsed"/>
-                                                </Grid>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="#25FFFFFF"/>
-                                                    <Setter TargetName="SelectedBorder" Property="Visibility" Value="Visible"/>
-                                                </Trigger>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#20FFFFFF"/>
-                                                </Trigger>
-                                                <MultiTrigger>
-                                                    <MultiTrigger.Conditions>
-                                                        <Condition Property="IsSelected" Value="True"/>
-                                                        <Condition Property="IsMouseOver" Value="True"/>
-                                                    </MultiTrigger.Conditions>
-                                                    <Setter Property="Background" Value="#30FFFFFF"/>
-                                                </MultiTrigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </ListView.ItemContainerStyle>
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Background="Transparent" 
-                                      Tag="{Binding}">
-                                    <Grid.ContextMenu>
-                                        <ContextMenu Style="{StaticResource FluentContextMenuStyle}">
-                                            <MenuItem Header="Restore to Last Saved Settings" Click="MenuRestoreConfig_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
-                                            <MenuItem Header="Clear Width and Height" Click="MenuClearWidthHeight_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
-                                            <Separator/>
-                                            <MenuItem Header="Open in Explorer" Click="MenuOpenInExplorer_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
-                                            <MenuItem Header="Open Application Directory" Click="MenuOpenAppDirectory_Click" Style="{StaticResource FluentMenuItemStyle}"/>
-                                            <MenuItem Header="Duplicate Configuration" Click="MenuDuplicateConfig_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
-                                            <Separator/>
-                                            <MenuItem Header="Remove Configuration" Click="BtnRemoveConfig_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
-                                        </ContextMenu>
-                                    </Grid.ContextMenu>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <Grid Grid.Row="0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        
-                                        <CheckBox Grid.Column="0" x:Name="chkSelectConfig" Style="{StaticResource FluentCheckBoxStyle}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                        
-                                        <TextBlock Grid.Column="1" Text="{Binding ExePath, StringFormat='Path: {0}'}" 
-                                                   Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
-                                        
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                            <Button x:Name="btnSelectWindow" Content="+" Click="BtnSelectWindow_Click" Tag="{Binding}"
-                                                    Style="{StaticResource FluentButtonStyle}" 
-                                                    Padding="8,4" Margin="0,0,5,0" ToolTip="Select Window"/>
-                                            <Button x:Name="btnBindProcess" Content="📎" Click="BtnBindProcess_Click" Tag="{Binding}"
-                                                    Style="{StaticResource FluentButtonStyle}" 
-                                                    Padding="8,4" Margin="0,0,5,0" ToolTip="Bind to Process"/>
-                                            <Button x:Name="btnEditPath" Content="✏" Click="BtnEditPath_Click" Tag="{Binding}"
-                                                    Style="{StaticResource FluentButtonStyle}" Padding="8,4" Margin="0,0,5,0" ToolTip="Edit Path"/>
-                                            <Button x:Name="btnRunConfig" Content="▶" Click="BtnRunConfig_Click" Tag="{Binding}" 
-                                                    Style="{StaticResource FluentAccentButtonStyle}" Padding="8,4" Margin="0,0,5,0" ToolTip="Run"/>
-                                            <Button x:Name="btnRemoveConfig" Content="✕" Click="BtnRemoveConfig_Click" Tag="{Binding}"
-                                                    Padding="8,4" Background="#E53935" Foreground="White" BorderThickness="0" 
-                                                    ToolTip="Remove">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="4"/>
-                                                    </Style>
-                                                </Button.Resources>
-                                            </Button>
-                                        </StackPanel>
-                                    </Grid>
-                                    
-                                    <!-- Bound Window Section (Shows when window is bound) -->
-                                    <Grid Grid.Row="1" Margin="0,10,0,0" Visibility="{Binding IsBound, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <Border Background="#25FFFFFF" BorderBrush="#44FFFFFF" BorderThickness="1" CornerRadius="6" Padding="12">
-                                            <Grid>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                    <RowDefinition Height="Auto"/>
-                                                </Grid.RowDefinitions>
-                                                
-                                                <TextBlock Grid.Row="0" Text="{Binding BoundWindowTitle, StringFormat='Bound to: {0}'}" 
-                                                           Foreground="#AAFFFFFF" FontSize="12" Margin="0,0,0,10"/>
-                                                
-                                                <!-- Process Monitoring Info -->
-                                                <Grid Grid.Row="1" Margin="0,0,0,10" x:Name="processMonitoringGrid" 
-                                                      Visibility="{Binding ProcessDetails, Converter={StaticResource NullToVisibilityConverter}}">
-                                                    <StackPanel>
-                                                        <Grid Margin="0,5,0,0">
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            
-                                                            <TextBlock Grid.Column="0" Text="Position: " 
-                                                                      Foreground="#AAFFFFFF" FontSize="12"/>
-                                                            <TextBlock Grid.Column="1" Text="{Binding ProcessDetails.FormattedPosition}" 
-                                                                      Foreground="#FFFFFF" FontSize="12"/>
-                                                            
-                                                            <TextBlock Grid.Column="2" Text="Size: " 
-                                                                      Foreground="#AAFFFFFF" FontSize="12" Margin="10,0,0,0"/>
-                                                            <TextBlock Grid.Column="3" Text="{Binding ProcessDetails.FormattedSize}" 
-                                                                      Foreground="#FFFFFF" FontSize="12"/>
-                                                        </Grid>
-                                                        
-                                                        <Grid Margin="0,5,0,0">
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            
-                                                            <TextBlock Grid.Column="0" Text="PID: " 
-                                                                      Foreground="#AAFFFFFF" FontSize="12"/>
-                                                            <TextBlock Grid.Column="1" Text="{Binding ProcessDetails.ProcessId}" 
-                                                                      Foreground="#FFFFFF" FontSize="12"/>
-                                                            
-                                                            <TextBlock Grid.Column="2" Text="CPU: " 
-                                                                      Foreground="#AAFFFFFF" FontSize="12" Margin="10,0,0,0"/>
-                                                            <TextBlock Grid.Column="3" Text="{Binding ProcessDetails.FormattedCpuUsage}" 
-                                                                      Foreground="#FFFFFF" FontSize="12"/>
-                                                            
-                                                            <TextBlock Grid.Column="4" Text="Memory: " 
-                                                                      Foreground="#AAFFFFFF" FontSize="12" Margin="10,0,0,0"/>
-                                                            <TextBlock Grid.Column="5" Text="{Binding ProcessDetails.FormattedMemoryUsage}" 
-                                                                      Foreground="#FFFFFF" FontSize="12"/>
-                                                        </Grid>
-                                                    </StackPanel>
-                                                </Grid>
-                                                
-                                                <StackPanel Grid.Row="2" Orientation="Horizontal">
-                                                    <Button Content="Apply Size/Pos" Click="BtnApplyPosition_Click" Tag="{Binding}"
-                                                            Style="{StaticResource FluentAccentButtonStyle}" Padding="10,4" Margin="0,0,8,0" 
-                                                            FontSize="11"/>
-                                                    
-                                                    <Button Content="Update Z-Order" Click="BtnUpdateZOrder_Click" Tag="{Binding}"
-                                                            Style="{StaticResource FluentAccentButtonStyle}" Padding="10,4" Margin="0,0,8,0"
-                                                            FontSize="11"/>
-                                                    
-                                                    <Button Content="Kill Process" Click="BtnKillProcess_Click" Tag="{Binding}"
-                                                            Style="{StaticResource FluentButtonStyle}" Padding="10,4" Margin="0,0,8,0"
-                                                            ToolTip="Terminate the associated process"
-                                                            FontSize="11">
-                                                        <Button.Resources>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="CornerRadius" Value="4"/>
-                                                            </Style>
-                                                        </Button.Resources>
-                                                    </Button>
-                                                    
-                                                    <Button Content="Unbind" Click="BtnUnbindWindow_Click" Tag="{Binding}"
-                                                            Padding="10,4" Background="#E53935" Foreground="White"
-                                                            BorderThickness="0" FontSize="11">
-                                                        <Button.Resources>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="CornerRadius" Value="4"/>
-                                                            </Style>
-                                                        </Button.Resources>
-                                                    </Button>
-                                                </StackPanel>
-                                            </Grid>
-                                        </Border>
-                                    </Grid>
-                                    
-                                    <!-- Path Edit -->
-                                    <Grid x:Name="pathEditGrid" Grid.Row="2" Visibility="Collapsed">
+                    <!-- App Settings with Fluent Design -->
+                    <Border Grid.Row="0" Background="#15FFFFFF" CornerRadius="8" Padding="15" Margin="0,0,0,15" Visibility="Collapsed" x:Name="SettingsPanel">
+                        <StackPanel>
+                            <TextBlock Text="Application Settings" Foreground="#FFFFFF" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Silent Mode checkbox is hidden from UI but kept in code -->
+                                <CheckBox Grid.Row="0" Grid.Column="0" x:Name="chkSilentMode" Content="Silent Mode" 
+                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8" 
+                                 Checked="AppSettings_Changed" Unchecked="AppSettings_Changed"
+                                 Visibility="Collapsed">
+                                    <CheckBox.ToolTip>
+                                        <TextBlock Text="Disable notification sounds and minimize visual notifications" TextWrapping="Wrap" MaxWidth="250"/>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+
+                                <CheckBox Grid.Row="0" Grid.Column="0" x:Name="chkRunAtStartup" Content="Run at Startup" 
+                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
+                                 Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                    <CheckBox.ToolTip>
+                                        <TextBlock Text="Launch application automatically when Windows starts" TextWrapping="Wrap" MaxWidth="250"/>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+
+                                <CheckBox Grid.Row="1" Grid.Column="0" x:Name="chkRunAsAdmin" Content="Run as Administrator" 
+                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
+                                 Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                    <CheckBox.ToolTip>
+                                        <TextBlock Text="Run with elevated privileges to control applications that require administrator access" TextWrapping="Wrap" MaxWidth="250"/>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+
+                                <CheckBox Grid.Row="2" Grid.Column="0" x:Name="chkKeepOriginalSize" Content="Keep Original Window Size" 
+                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
+                                 Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                    <CheckBox.ToolTip>
+                                        <TextBlock Text="Maintain the original size of windows when positioning them" TextWrapping="Wrap" MaxWidth="250"/>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+
+                                <CheckBox Grid.Row="3" Grid.Column="0" x:Name="chkConfirmProcessKill" Content="Confirm Before Killing Process" 
+                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
+                                 Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                    <CheckBox.ToolTip>
+                                        <TextBlock Text="Show confirmation dialog before terminating a process" TextWrapping="Wrap" MaxWidth="250"/>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+
+                                <CheckBox Grid.Row="4" Grid.Column="0" x:Name="chkBindToProcessWhenSelectingWindow" Content="Bind to Process When Selecting Window" 
+                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,8"
+                                 Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                    <CheckBox.ToolTip>
+                                        <TextBlock Text="Automatically bind to process when using the Select Window feature" TextWrapping="Wrap" MaxWidth="250"/>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+
+                                <CheckBox Grid.Row="5" Grid.Column="0" x:Name="chkShowBoundProcessDetails" Content="Show Bound Process Details" 
+                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,0,0"
+                                 Checked="AppSettings_Changed" Unchecked="AppSettings_Changed">
+                                    <CheckBox.ToolTip>
+                                        <TextBlock Text="Display real-time information about bound processes (size, position, CPU, memory)" TextWrapping="Wrap" MaxWidth="250"/>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Window Configurations with Fluent Design -->
+                    <Grid Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Window Configurations" Foreground="#FFFFFF" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <Button Grid.Column="1" x:Name="btnAddConfig" Content="Add New" Click="BtnAddConfig_Click" 
+                            Style="{StaticResource FluentAccentButtonStyle}" Padding="10,5"/>
+                        </Grid>
+
+                        <ListView Grid.Row="1" x:Name="lvWindowConfigs" 
+                          Style="{StaticResource FluentListViewStyle}"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                          SelectionChanged="LvWindowConfigs_SelectionChanged"
+                          Margin="0,0,0,0"
+                          Padding="0,2,0,2">
+                            <ListView.Template>
+                                <ControlTemplate TargetType="ListView">
+                                    <ScrollViewer Style="{StaticResource FluentScrollViewerStyle}">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </ControlTemplate>
+                            </ListView.Template>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Background" Value="#15FFFFFF"/>
+                                    <Setter Property="Margin" Value="0,0,0,10"/>
+                                    <Setter Property="Padding" Value="16"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="AllowDrop" Value="True"/>
+                                    <Setter Property="IsTabStop" Value="True"/>
+                                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                    <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ConfigItem_MouseLeftButtonDown"/>
+                                    <EventSetter Event="Drop" Handler="ConfigItem_Drop"/>
+                                    <EventSetter Event="DragEnter" Handler="ConfigItem_DragEnter"/>
+                                    <EventSetter Event="DragLeave" Handler="ConfigItem_DragLeave"/>
+                                    <EventSetter Event="DragOver" Handler="ConfigItem_DragOver"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListViewItem">
+                                                <Border x:Name="ItemBorder"
+                                                Background="{TemplateBinding Background}" 
+                                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="8"
+                                                Tag="{Binding}">
+                                                    <Grid>
+                                                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
+                                                                  Margin="{TemplateBinding Padding}"/>
+                                                        <Border x:Name="SelectedBorder" BorderThickness="1" BorderBrush="{StaticResource FluentAccentBrush}" CornerRadius="8" Visibility="Collapsed"/>
+                                                    </Grid>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter Property="Background" Value="#25FFFFFF"/>
+                                                        <Setter TargetName="SelectedBorder" Property="Visibility" Value="Visible"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#20FFFFFF"/>
+                                                    </Trigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsSelected" Value="True"/>
+                                                            <Condition Property="IsMouseOver" Value="True"/>
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter Property="Background" Value="#30FFFFFF"/>
+                                                    </MultiTrigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Background="Transparent" 
+                                  Tag="{Binding}">
+                                        <Grid.ContextMenu>
+                                            <ContextMenu Style="{StaticResource FluentContextMenuStyle}">
+                                                <MenuItem Header="Restore to Last Saved Settings" Click="MenuRestoreConfig_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
+                                                <MenuItem Header="Clear Width and Height" Click="MenuClearWidthHeight_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
+                                                <Separator/>
+                                                <MenuItem Header="Open in Explorer" Click="MenuOpenInExplorer_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
+                                                <MenuItem Header="Open Application Directory" Click="MenuOpenAppDirectory_Click" Style="{StaticResource FluentMenuItemStyle}"/>
+                                                <MenuItem Header="Duplicate Configuration" Click="MenuDuplicateConfig_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
+                                                <Separator/>
+                                                <MenuItem Header="Remove Configuration" Click="BtnRemoveConfig_Click" Tag="{Binding}" Style="{StaticResource FluentMenuItemStyle}"/>
+                                            </ContextMenu>
+                                        </Grid.ContextMenu>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
-                                        
-                                        <TextBlock Text="Edit Executable Path:" Foreground="#FFFFFF" Margin="0,0,0,10"/>
-                                        
-                                        <Grid Grid.Row="1" Margin="0,0,0,5">
+
+                                        <Grid Grid.Row="0">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            
-                                            <TextBox x:Name="txtExePath" Grid.Column="0" Text="{Binding ExePath}" 
-                                                    Style="{StaticResource PathTextBoxStyle}"
-                                                    TextChanged="TxtExePath_TextChanged"
-                                                    Tag="{Binding}"
-                                                    Padding="10,4"/>
-                                            
-                                            <Button Grid.Column="1" Content="Browse..." 
-                                                    Click="BtnBrowseExePath_Click" 
-                                                    Tag="{Binding}" 
-                                                    Style="{StaticResource FluentAccentButtonStyle}"
-                                                    Padding="12,4"
-                                                    Margin="8,0,0,0"/>
+
+                                            <CheckBox Grid.Column="0" x:Name="chkSelectConfig" Style="{StaticResource FluentCheckBoxStyle}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                                            <TextBlock Grid.Column="1" Text="{Binding ExePath, StringFormat='Path: {0}'}" 
+                                               Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
+
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                <Button x:Name="btnSelectWindow" Content="+" Click="BtnSelectWindow_Click" Tag="{Binding}"
+                                                Style="{StaticResource FluentButtonStyle}" 
+                                                Padding="8,4" Margin="0,0,5,0" ToolTip="Select Window"/>
+                                                <Button x:Name="btnBindProcess" Content="📎" Click="BtnBindProcess_Click" Tag="{Binding}"
+                                                Style="{StaticResource FluentButtonStyle}" 
+                                                Padding="8,4" Margin="0,0,5,0" ToolTip="Bind to Process"/>
+                                                <Button x:Name="btnEditPath" Content="✏" Click="BtnEditPath_Click" Tag="{Binding}"
+                                                Style="{StaticResource FluentButtonStyle}" Padding="8,4" Margin="0,0,5,0" ToolTip="Edit Path"/>
+                                                <Button x:Name="btnRunConfig" Content="▶" Click="BtnRunConfig_Click" Tag="{Binding}" 
+                                                Style="{StaticResource FluentAccentButtonStyle}" Padding="8,4" Margin="0,0,5,0" ToolTip="Run"/>
+                                                <Button x:Name="btnRemoveConfig" Content="✕" Click="BtnRemoveConfig_Click" Tag="{Binding}"
+                                                Padding="8,4" Background="#E53935" Foreground="White" BorderThickness="0" 
+                                                ToolTip="Remove">
+                                                    <Button.Resources>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="CornerRadius" Value="4"/>
+                                                        </Style>
+                                                    </Button.Resources>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Bound Window Section (Shows when window is bound) -->
+                                        <Grid Grid.Row="1" Margin="0,10,0,0" Visibility="{Binding IsBound, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Border Background="#25FFFFFF" BorderBrush="#44FFFFFF" BorderThickness="1" CornerRadius="6" Padding="12">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+
+                                                    <TextBlock Grid.Row="0" Text="{Binding BoundWindowTitle, StringFormat='Bound to: {0}'}" 
+                                                       Foreground="#AAFFFFFF" FontSize="12" Margin="0,0,0,10"/>
+
+                                                    <!-- Process Monitoring Info -->
+                                                    <Grid Grid.Row="1" Margin="0,0,0,10" x:Name="processMonitoringGrid" 
+                                                  Visibility="{Binding ProcessDetails, Converter={StaticResource NullToVisibilityConverter}}">
+                                                        <StackPanel>
+                                                            <Grid Margin="0,5,0,0">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <TextBlock Grid.Column="0" Text="Position: " 
+                                                                  Foreground="#AAFFFFFF" FontSize="12"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding ProcessDetails.FormattedPosition}" 
+                                                                  Foreground="#FFFFFF" FontSize="12"/>
+
+                                                                <TextBlock Grid.Column="2" Text="Size: " 
+                                                                  Foreground="#AAFFFFFF" FontSize="12" Margin="10,0,0,0"/>
+                                                                <TextBlock Grid.Column="3" Text="{Binding ProcessDetails.FormattedSize}" 
+                                                                  Foreground="#FFFFFF" FontSize="12"/>
+                                                            </Grid>
+
+                                                            <Grid Margin="0,5,0,0">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <TextBlock Grid.Column="0" Text="PID: " 
+                                                                  Foreground="#AAFFFFFF" FontSize="12"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding ProcessDetails.ProcessId}" 
+                                                                  Foreground="#FFFFFF" FontSize="12"/>
+
+                                                                <TextBlock Grid.Column="2" Text="CPU: " 
+                                                                  Foreground="#AAFFFFFF" FontSize="12" Margin="10,0,0,0"/>
+                                                                <TextBlock Grid.Column="3" Text="{Binding ProcessDetails.FormattedCpuUsage}" 
+                                                                  Foreground="#FFFFFF" FontSize="12"/>
+
+                                                                <TextBlock Grid.Column="4" Text="Memory: " 
+                                                                  Foreground="#AAFFFFFF" FontSize="12" Margin="10,0,0,0"/>
+                                                                <TextBlock Grid.Column="5" Text="{Binding ProcessDetails.FormattedMemoryUsage}" 
+                                                                  Foreground="#FFFFFF" FontSize="12"/>
+                                                            </Grid>
+                                                        </StackPanel>
+                                                    </Grid>
+
+                                                    <StackPanel Grid.Row="2" Orientation="Horizontal">
+                                                        <Button Content="Apply Size/Pos" Click="BtnApplyPosition_Click" Tag="{Binding}"
+                                                        Style="{StaticResource FluentAccentButtonStyle}" Padding="10,4" Margin="0,0,8,0" 
+                                                        FontSize="11"/>
+
+                                                        <Button Content="Update Z-Order" Click="BtnUpdateZOrder_Click" Tag="{Binding}"
+                                                        Style="{StaticResource FluentAccentButtonStyle}" Padding="10,4" Margin="0,0,8,0"
+                                                        FontSize="11"/>
+
+                                                        <Button Content="Kill Process" Click="BtnKillProcess_Click" Tag="{Binding}"
+                                                        Style="{StaticResource FluentButtonStyle}" Padding="10,4" Margin="0,0,8,0"
+                                                        ToolTip="Terminate the associated process"
+                                                        FontSize="11">
+                                                            <Button.Resources>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="CornerRadius" Value="4"/>
+                                                                </Style>
+                                                            </Button.Resources>
+                                                        </Button>
+
+                                                        <Button Content="Unbind" Click="BtnUnbindWindow_Click" Tag="{Binding}"
+                                                        Padding="10,4" Background="#E53935" Foreground="White"
+                                                        BorderThickness="0" FontSize="11">
+                                                            <Button.Resources>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="CornerRadius" Value="4"/>
+                                                                </Style>
+                                                            </Button.Resources>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+
+                                        <!-- Path Edit -->
+                                        <Grid x:Name="pathEditGrid" Grid.Row="2" Visibility="Collapsed">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Text="Edit Executable Path:" Foreground="#FFFFFF" Margin="0,0,0,10"/>
+
+                                            <Grid Grid.Row="1" Margin="0,0,0,5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBox x:Name="txtExePath" Grid.Column="0" Text="{Binding ExePath}" 
+                                                Style="{StaticResource PathTextBoxStyle}"
+                                                TextChanged="TxtExePath_TextChanged"
+                                                Tag="{Binding}"
+                                                Padding="10,4"/>
+
+                                                <Button Grid.Column="1" Content="Browse..." 
+                                                Click="BtnBrowseExePath_Click" 
+                                                Tag="{Binding}" 
+                                                Style="{StaticResource FluentAccentButtonStyle}"
+                                                Padding="12,4"
+                                                Margin="8,0,0,0"/>
+                                            </Grid>
+                                        </Grid>
+
+                                        <Grid Grid.Row="3" Margin="0,12,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,15,0">
+                                                <TextBlock Text="X:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBox Text="{Binding X}" Style="{StaticResource NumberTextBoxStyle}" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,15,0">
+                                                <TextBlock Text="Y:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBox Text="{Binding Y}" Style="{StaticResource NumberTextBoxStyle}" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,15,0">
+                                                <TextBlock Text="Width:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBox Text="{Binding Width, TargetNullValue=''}" Style="{StaticResource NumberTextBoxStyle}" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                                <TextBlock Text="Height:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBox Text="{Binding Height, TargetNullValue=''}" Style="{StaticResource NumberTextBoxStyle}" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid Grid.Row="4" Margin="0,12,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <CheckBox Grid.Column="0" Content="Always on Top" IsChecked="{Binding EnableAlwaysOnTop}" 
+                                             Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,15,0"/>
+
+                                            <CheckBox Grid.Column="1" Content="Topmost" IsChecked="{Binding EnableAlwaysOnTopMost}" 
+                                             Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,15,0"/>
+
+                                            <CheckBox Grid.Column="2" Content="Always on Bottom" IsChecked="{Binding EnableAlwaysOnBottom}" 
+                                             Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,15,0"/>
+
+                                            <CheckBox Grid.Column="3" Content="Mouse Through" IsChecked="{Binding EnableMouseThrough}" 
+                                             Style="{StaticResource FluentCheckBoxStyle}"/>
                                         </Grid>
                                     </Grid>
-                                    
-                                    <Grid Grid.Row="3" Margin="0,12,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        
-                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,15,0">
-                                            <TextBlock Text="X:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <TextBox Text="{Binding X}" Style="{StaticResource NumberTextBoxStyle}" />
-                                        </StackPanel>
-                                        
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,15,0">
-                                            <TextBlock Text="Y:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <TextBox Text="{Binding Y}" Style="{StaticResource NumberTextBoxStyle}" />
-                                        </StackPanel>
-                                        
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,15,0">
-                                            <TextBlock Text="Width:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <TextBox Text="{Binding Width, TargetNullValue=''}" Style="{StaticResource NumberTextBoxStyle}" />
-                                        </StackPanel>
-                                        
-                                        <StackPanel Grid.Column="3" Orientation="Horizontal">
-                                            <TextBlock Text="Height:" Foreground="#FFFFFF" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <TextBox Text="{Binding Height, TargetNullValue=''}" Style="{StaticResource NumberTextBoxStyle}" />
-                                        </StackPanel>
-                                    </Grid>
-                                    
-                                    <Grid Grid.Row="4" Margin="0,12,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        
-                                        <CheckBox Grid.Column="0" Content="Always on Top" IsChecked="{Binding EnableAlwaysOnTop}" 
-                                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,15,0"/>
-                                        
-                                        <CheckBox Grid.Column="1" Content="Topmost" IsChecked="{Binding EnableAlwaysOnTopMost}" 
-                                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,15,0"/>
-                                        
-                                        <CheckBox Grid.Column="2" Content="Always on Bottom" IsChecked="{Binding EnableAlwaysOnBottom}" 
-                                                 Style="{StaticResource FluentCheckBoxStyle}" Margin="0,0,15,0"/>
-                                        
-                                        <CheckBox Grid.Column="3" Content="Mouse Through" IsChecked="{Binding EnableMouseThrough}" 
-                                                 Style="{StaticResource FluentCheckBoxStyle}"/>
-                                    </Grid>
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+
+                    <!-- Action Buttons with Fluent Design -->
+                    <Grid Grid.Row="2" Margin="0,15,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="1" x:Name="btnRunSelected" Content="Run Selected" Click="BtnRunSelected_Click" 
+                        Padding="15,8" Margin="0,0,10,0" Background="#4CAF50" Foreground="White" BorderThickness="0">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="6"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+
+                        <Button Grid.Column="2" x:Name="btnSaveConfig" Content="Save Configuration" Click="BtnSaveConfig_Click" 
+                        Style="{StaticResource FluentAccentButtonStyle}" Padding="15,8"/>
+                    </Grid>
                 </Grid>
 
-                <!-- Action Buttons with Fluent Design -->
-                <Grid Grid.Row="2" Margin="0,15,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <Button Grid.Column="1" x:Name="btnRunSelected" Content="Run Selected" Click="BtnRunSelected_Click" 
-                            Padding="15,8" Margin="0,0,10,0" Background="#4CAF50" Foreground="White" BorderThickness="0">
-                        <Button.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="6"/>
-                            </Style>
-                        </Button.Resources>
-                    </Button>
-                    
-                    <Button Grid.Column="2" x:Name="btnSaveConfig" Content="Save Configuration" Click="BtnSaveConfig_Click" 
-                            Style="{StaticResource FluentAccentButtonStyle}" Padding="15,8"/>
-                </Grid>
+                <!-- Resize Grip in bottom-right corner --><!--
+                <ResizeGrip x:Name="ResizeCorner" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                    Opacity="0.6" Margin="0,0,0,0" Cursor="SizeNWSE">
+                    <ResizeGrip.Template>
+                        <ControlTemplate TargetType="ResizeGrip">
+                            <Grid Width="16" Height="16">
+                                <Path Data="M 0,16 L 16,0 16,16 Z" Fill="#55FFFFFF" />
+                            </Grid>
+                        </ControlTemplate>
+                    </ResizeGrip.Template>
+                </ResizeGrip>-->
             </Grid>
-            
-            <!-- Resize Grip in bottom-right corner -->
-            <ResizeGrip x:Name="ResizeCorner" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" 
-                        Opacity="0.6" Margin="0,0,0,0" Cursor="SizeNWSE">
-                <ResizeGrip.Template>
-                    <ControlTemplate TargetType="ResizeGrip">
-                        <Grid Width="16" Height="16">
-                            <Path Data="M 0,16 L 16,0 16,16 Z" Fill="#55FFFFFF" />
-                        </Grid>
-                    </ControlTemplate>
-                </ResizeGrip.Template>
-            </ResizeGrip>
-        </Grid>
-    </Border>
+        </Border>
+    </Grid>
+    
 </Window>

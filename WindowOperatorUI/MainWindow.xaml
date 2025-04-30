@@ -12,6 +12,7 @@
         Background="Transparent"
         ResizeMode="NoResize"
         Icon="/Assets/icon.ico"
+       
         SizeChanged="Window_SizeChanged">
     
     <Window.Resources>
@@ -24,7 +25,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder" Background="Transparent" CornerRadius="4">
+                        <Border x:Name="ButtonBorder" Background="Transparent" CornerRadius="10">
                             <TextBlock Text="{TemplateBinding Content}" 
                                        FontFamily="Segoe MDL2 Assets" 
                                        FontSize="12"
@@ -114,13 +115,13 @@
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
-        <WindowChrome GlassFrameThickness="-1"   CaptionHeight="0"   />
+        <WindowChrome GlassFrameThickness="-1" CaptionHeight="0" />
     </WindowChrome.WindowChrome>
-    <Grid Margin="5" Background="White">
+    <Grid Margin="5" Background="Transparent">
         <Grid.Effect>
-            <DropShadowEffect ShadowDepth="0" BlurRadius="10" Opacity="0.8" Color="#AAAAAA"/>
+            <DropShadowEffect ShadowDepth="0" BlurRadius="10" Opacity="0.8" Color="Black"/>
         </Grid.Effect>
-        <Border x:Name="MainBorder" Background="{StaticResource FluentBackgroundBrush}" BorderBrush="Transparent" BorderThickness="0" MouseMove="MainBorder_MouseMove" MouseDown="MainBorder_MouseDown">
+        <Border x:Name="MainBorder" Background="{StaticResource FluentBackgroundBrush}" BorderBrush="Transparent" BorderThickness="0" MouseMove="MainBorder_MouseMove" MouseDown="MainBorder_MouseDown" >
             <Border.Resources>
                 <Storyboard x:Key="ShowResizeCursor">
                     <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Cursor" Duration="0:0:0.1">
@@ -141,7 +142,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- Title Bar with Fluent Design -->
-                <Grid Grid.Row="0" Background="#33000000" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0">
                         <Image Source="/Assets/icon.ico" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
                         <TextBlock Text="Window Operator" Foreground="#FFFFFF" FontWeight="SemiBold" VerticalAlignment="Center"/>

@@ -16,7 +16,7 @@ namespace WindowOperatorUI.Models
         }
         
         // 生成可绑定属性
-        private string _exePath = @"D:\Desktop\bongo_cat_mver_0.1.6_64\Bongo Cat Mver.exe";
+        private string _exePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         public string ExePath 
         { 
             get => _exePath; 
